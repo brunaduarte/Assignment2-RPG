@@ -1,0 +1,8 @@
+Name: walber
+Health: 100
+Strength: 67
+Magic: 77
+Wealth: 14
+Location: 12, 13
+Weapon1: 0
+Weapon2: 0

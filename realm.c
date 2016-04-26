@@ -41,6 +41,7 @@ const byte BadGuyDamage[]={10,10,15,5};
 int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
+FILE *SaveFile;
 void delay(int len);
 
 unsigned prbs()
@@ -87,16 +88,26 @@ void runGame(void)
 	while(GameStarted == 0)
 	{
 		
-		showGameMessage("Press S to start a new game");
+		showGameMessage("Press S to start a new game \nPress L to load a previous game");
 		ch = getUserInput();			
 		
-		if ( (ch == 'S') || (ch == 's') )
+		if ( (ch == 'S') || (ch == 's') || (ch == 'L') || (ch == 'l') )
 			GameStarted = 1;
 	}
 	
-	initRealm(&theRealm);	
-	initPlayer(&thePlayer,&theRealm);
+	if ( (ch == 'S') || (ch == 's') )
+	{
+		initRealm(&theRealm);	
+		initPlayer(&thePlayer,&theRealm);
+	}
+	if( (ch == 'L') || (ch == 'l') )
+	{
+		LoadPlayer(&thePlayer);
+		LoadRealm(&theRealm);
+		eputs("Game Loaded!\n");
+	}
 	showPlayer(&thePlayer);
+	eputs("\n");
 	showRealm(&theRealm,&thePlayer);
 	showGameMessage("Press H for help");
 	
@@ -105,6 +116,12 @@ void runGame(void)
 		ch = getUserInput();
 		ch = ch | 32; // enforce lower case
 		switch (ch) {
+			case '.' : {
+				SavePlayer(&thePlayer);
+				SaveRealm(&theRealm);
+				showGameMessage("Game Saved!");
+  				break;
+			}
 			case 'h' : {
 				showHelp();
 				break;
@@ -134,7 +151,7 @@ void runGame(void)
 				if (thePlayer.wealth)		
 				{
 					showRealm(&theRealm,&thePlayer);
-					thePlayer.wealth--;
+					//thePlayer.wealth--; //no one likes this
 				}
 				else
 					showGameMessage("No gold!");
@@ -515,6 +532,94 @@ void showPlayer(tPlayer *thePlayer)
 	eputs("Weapon2 : ");
 	printString(getWeaponName(thePlayer->Weapon2));
 }
+
+void SavePlayer(tPlayer *thePlayer)
+{
+   	SaveFile = fopen("SavePlayer.txt", "w");
+   	fprintf(SaveFile, "Name: %s\n", thePlayer->name);
+   	fprintf(SaveFile, "Health: %d\n", thePlayer->health);
+   	fprintf(SaveFile, "Strength: %d\n", thePlayer->strength);
+   	fprintf(SaveFile, "Magic: %d\n", thePlayer->magic);
+   	fprintf(SaveFile, "Wealth: %d\n", thePlayer->wealth);
+   	fprintf(SaveFile, "Location: %d, %d\n", thePlayer->x, thePlayer->y);
+	fprintf(SaveFile, "Weapon1: %d\n", thePlayer->Weapon1);
+	fprintf(SaveFile, "Weapon2: %d\n", thePlayer->Weapon2);
+  	fclose(SaveFile);		
+}
+
+void SaveRealm(tRealm *theRealm)
+{
+	int x,y;
+   	SaveFile = fopen("SaveRealm.txt", "w");
+	for(y=0;y<MAP_HEIGHT;y++)
+	{
+		for(x=0;x<MAP_WIDTH;x++)
+			fprintf(SaveFile, "%d ", theRealm->map[y][x]);
+		fprintf(SaveFile, "\n");
+	}
+  	fclose(SaveFile);		
+}
+
+void LoadRealm(tRealm *theRealm)
+{
+	int x,y;
+   	SaveFile = fopen("SaveRealm.txt", "r");
+	for(y=0;y<MAP_HEIGHT;y++)
+	{
+		for(x=0;x<MAP_WIDTH;x++)
+		{
+			//printf("TEST %d", x+y*20);
+			fscanf(SaveFile, "%d", &theRealm->map[y][x]);
+			//eputs("TEST HERE");
+			fseek(SaveFile , 1+ x/(MAP_WIDTH-1) , SEEK_CUR ); //moves through the "space" char or "\n"
+		}
+	}
+  	fclose(SaveFile);		
+}
+
+void LoadPlayer(tPlayer *thePlayer)
+{
+	char aux[255];
+   	SaveFile = fopen("SavePlayer.txt", "r");
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%s", thePlayer->name);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->health);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->strength);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->magic);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->wealth);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->x);
+
+	fseek (SaveFile , 2 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->y);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->Weapon1);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->Weapon2);
+
+	fclose(SaveFile);
+}
+
 void initRealm(tRealm *Realm)
 {
 	int x,y;
@@ -566,11 +671,12 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 void showHelp()
 {
 
-	printString("Help");
+	printString("\nHelp");
 	printString("N,S,E,W : go North, South, East, West");
-	printString("# : show map (cost: 1 gold piece)");
+	printString("# : show map");
+	printString(". : save game");
 	printString("(H)elp");
-	printString("(P)layer details");
+	printString("(P)layer details\n");
 	
 }
 
