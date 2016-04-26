@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
 const char FindTypes[]={'h','s','m','g','w'};
 
-
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
 // Baddie types : O(gre),T(roll),D(ragon),H(ag)
