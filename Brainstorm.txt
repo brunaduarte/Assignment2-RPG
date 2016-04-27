@@ -1,9 +1,19 @@
 Brainstorm
 
-Different languages
+Different languages 
 Colors for energy levels
 Bigger screen 
-New invensible item 
-User page (shows level and stats)
-
-
+New invincible item (like the star in Super Mario)
+User page (shows level, xp and stats)
+Stats (magic, hp, strenght, luck, etc)
+Graphic Interface (2D interface - work with unity?)
+Multiplayer game
+Main and Side Quests (with different prizes - can be items, xp or gold)
+Other Characters (idle characters)
+Fit the map on the screen 
+Different Plataforms (Windows and Linux)
+More options for the character (choose race, class, gender, etc)
+New Items (armor, grimoire, staff, etc)
+New dungeons with different bosses
+Game difficulty 
+New enemies
