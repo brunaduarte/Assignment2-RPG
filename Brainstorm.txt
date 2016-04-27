@@ -17,3 +17,6 @@ New Items (armor, grimoire, staff, etc)
 New dungeons with different bosses
 Game difficulty 
 New enemies
+Save/Load the game (DONE!)
+Streght -> Stamina
+Experience -> Level up
