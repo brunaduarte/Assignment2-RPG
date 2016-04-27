@@ -637,7 +637,7 @@ void initRealm(tRealm *Realm)
 			else if (Rnd >= 90) // put in some rocks
 				Realm->map[y][x]='*'; 
 			else // put in empty space
-				Realm->map[y][x] = '.';	
+				Realm->map[y][x] ='.';
 		}
 	}
 	
@@ -682,7 +682,8 @@ void showHelp()
 void showGameMessage(char *Msg)
 {
 	printString(Msg);
-	printString("Ready");	
+	printString("Ready");
+	putchar(254);
 }
 char getUserInput()
 {
