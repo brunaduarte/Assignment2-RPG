@@ -1,3 +1,7 @@
 - remove 1 gold coin cost to see map
 
-- creating save system
+- create save/load system
+
+- reworking damage/battle system
+
+- showing values in decimal instead of hexa

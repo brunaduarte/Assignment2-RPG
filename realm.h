@@ -15,6 +15,7 @@ typedef struct {
 	char name[MAX_NAME_LEN+1];
 	byte health;	
 	byte strength;
+	byte stamina;
 	byte magic;
 	byte wealth;
 	byte x,y;

@@ -28,11 +28,11 @@ const char FindTypes[]={'h','s','m','g','w'};
 // their battle properies - ordering matters!
 // Baddie types : O(gre),T(roll),D(ragon),H(ag)
 const char Baddies[]={'O','T','D','H'};
-// The following is 4 sets of 4 damage types
-const byte WeaponDamage[]={10,10,5,25,10,10,5,25,10,15,5,15,5,5,2,10};
+// The following is the weapons' damage
+const byte WeaponDamage[]={2,8,10,12};
 #define ICE_SPELL_COST 10
-#define FIRE_SPELL_COST 20
-#define LIGHTNING_SPELL_COST 30
+#define FIRE_SPELL_COST 10
+#define LIGHTNING_SPELL_COST 10
 const byte FreezeSpellDamage[]={10,20,5,0};
 const byte FireSpellDamage[]={20,10,5,0};
 const byte LightningSpellDamage[]={15,10,25,0};
@@ -40,6 +40,7 @@ const byte BadGuyDamage[]={10,10,15,5};
 int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
+int RealmLevel=0;
 FILE *SaveFile;
 void delay(int len);
 
@@ -178,13 +179,13 @@ void step(char Direction,tPlayer *Player,tRealm *Realm)
 		}
 		case 's' :
 		{
-			if (new_y < MAP_HEIGHT-1)
+			if (new_y < 20+RealmLevel*4-1)
 				new_y++;
 			break;
 		}
 		case 'e' :
 		{
-			if (new_x <  MAP_WIDTH-1)
+			if (new_x <  20+RealmLevel*4-1)
 				new_x++;
 			break;
 		}
@@ -261,6 +262,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm)
 		case 'X' : {
 			// Player landed on the exit
 			printString("A door! You exit into a new realm");
+			RealmLevel++;
 			setHealth(Player,100); // maximize health
 			initRealm(&theRealm);
 			showRealm(&theRealm,Player);
@@ -272,8 +274,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm)
 int doChallenge(tPlayer *Player,int BadGuyIndex)
 {
 	char ch;
-	char Damage;
-	const byte *dmg;
+	int Damage;
 	int BadGuyHealth = 100;
 	printString("Press F to fight");
 	ch = getUserInput() | 32; // get user input and force lower case
@@ -308,7 +309,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				{
 					printString("FREEZE!");
 					Player->magic -= ICE_SPELL_COST;
-					BadGuyHealth -= FreezeSpellDamage[BadGuyIndex]+range_random(10);
+					Damage = FreezeSpellDamage[BadGuyIndex]+range_random(10);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					zap();
 					break;
 				}
@@ -317,7 +320,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				{
 					printString("BURN!");
 					Player->magic -= FIRE_SPELL_COST;
-					BadGuyHealth -= FireSpellDamage[BadGuyIndex]+range_random(10);
+					Damage = FireSpellDamage[BadGuyIndex]+range_random(10);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					zap();
 					break;
 				}
@@ -326,31 +331,37 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				{
 					printString("ZAP!");
 					Player->magic -= LIGHTNING_SPELL_COST;
-					BadGuyHealth -= LightningSpellDamage[BadGuyIndex]+range_random(10);
+					Damage = LightningSpellDamage[BadGuyIndex]+range_random(10);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					zap();
 					break;
 				}
 				case '1':
 				{
-					dmg = WeaponDamage+(Player->Weapon1<<2)+BadGuyIndex;
+					Damage = WeaponDamage[Player->Weapon1]+range_random(Player->strength);
 					printString("Take that!");
-					BadGuyHealth -= *dmg + range_random(Player->strength);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					setStrength(Player,Player->strength-1);
 					break;
 				}
 				case '2':
 				{
-					dmg = WeaponDamage+(Player->Weapon2<<2)+BadGuyIndex;
+					Damage = WeaponDamage[Player->Weapon2]+range_random(Player->strength);
 					printString("Take that!");
-					BadGuyHealth -= *dmg + range_random(Player->strength);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					setStrength(Player,Player->strength-1);
 					break;
 				}
 				case 'p':
 				case 'P':
 				{
+					Damage = WeaponDamage[Player->Weapon1]+range_random(Player->strength);
 					printString("Thump!");
-					BadGuyHealth -= 1+range_random(Player->strength);
+					BadGuyHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 					setStrength(Player,Player->strength-1);
 					break;
 				}
@@ -358,15 +369,20 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					printString("You fumble. Uh oh");
 				}
 			}
-			// Bad guy then gets a go 
-			
-			if (BadGuyHealth < 0)
+
+			// Bad guy then gets a go 			
+			if (BadGuyHealth <= 0)
 				BadGuyHealth = 0;
-			Damage = BadGuyDamage[BadGuyIndex]+range_random(5);
-			setHealth(Player,Player->health - Damage);
-			eputs("Health: you "); printHex(Player->health);
-			eputs(", them " );printHex(BadGuyHealth);
-			eputs("\r\n");
+			else
+			{
+				eputs("\nMonster's turn!\n");
+				Damage = BadGuyDamage[BadGuyIndex]+range_random(5);
+				setHealth(Player,Player->health - Damage);
+				eputs("you took "); printf("%d", Damage); eputs(" damage!\n\n");
+				eputs("Health: you "); printf("%d", Player->health);
+				eputs(", monster " );printf("%d", BadGuyHealth);
+				eputs("\r\n");
+			}
 		}
 		if (Player->health == 0)
 		{ // You died
@@ -624,9 +640,9 @@ void initRealm(tRealm *Realm)
 	int x,y;
 	int Rnd;
 	// clear the map to begin with
-	for (y=0;y < MAP_HEIGHT; y++)
+	for (y=0;y < 20+RealmLevel*4; y++)
 	{
-		for (x=0; x < MAP_WIDTH; x++)
+		for (x=0; x < 20+RealmLevel*4; x++)
 		{
 			Rnd = range_random(100);
 			
@@ -642,17 +658,17 @@ void initRealm(tRealm *Realm)
 	}
 	
 	// finally put the exit to the next level in
-	x = range_random(MAP_WIDTH);
-	y = range_random(MAP_HEIGHT);
+	x = range_random(20+RealmLevel*4);
+	y = range_random(20+RealmLevel*4);
 	Realm->map[y][x]='X';
 }
 void showRealm(tRealm *Realm,tPlayer *thePlayer)
 {
 	int x,y;
 	printString("The Realm:");	
-	for (y=0;y<MAP_HEIGHT;y++)
+	for (y=0;y<20+RealmLevel*4;y++)
 	{
-		for (x=0;x<MAP_WIDTH;x++)
+		for (x=0;x<20+RealmLevel*4;x++)
 		{
 			
 			if ( (x==thePlayer->x) && (y==thePlayer->y))
@@ -683,7 +699,6 @@ void showGameMessage(char *Msg)
 {
 	printString(Msg);
 	printString("Ready");
-	putchar(254);
 }
 char getUserInput()
 {

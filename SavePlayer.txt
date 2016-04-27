@@ -1,8 +1,8 @@
-Name: walber
+Name: adsdasd
 Health: 100
-Strength: 67
-Magic: 27
-Wealth: 57
-Location: 26, 5
+Strength: 73
+Magic: 97
+Wealth: 14
+Location: 18, 9
 Weapon1: 0
 Weapon2: 0
