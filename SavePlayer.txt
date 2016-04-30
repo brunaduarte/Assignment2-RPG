@@ -1,8 +1,8 @@
-Name: dahdja
+Name: bruna
 Health: 100
-Strength: 71
-Magic: 93
-Wealth: 20
-Location: 5, 14
+Strength: 78
+Magic: 98
+Wealth: 10
+Location: 15, 6
 Weapon1: 0
 Weapon2: 0

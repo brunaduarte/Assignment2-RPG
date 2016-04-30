@@ -2,11 +2,11 @@ Brainstorm
 
 Different languages 
 Colors for energy levels
-Bigger screen 
+Bigger screen (DONE! the size change according to the dungeon level)
 New invincible item (like the star in Super Mario)
 User page (shows level, xp and stats)
 Stats (magic, hp, strenght, luck, etc)
-Graphic Interface (2D interface - work with unity?)
+Graphic Interface (ASCII characters)
 Multiplayer game
 Main and Side Quests (with different prizes - can be items, xp or gold)
 Other Characters (idle characters)
@@ -20,3 +20,4 @@ New enemies
 Save/Load the game (DONE!)
 Streght -> Stamina
 Experience -> Level up
+Player mobility

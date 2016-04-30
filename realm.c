@@ -164,7 +164,7 @@ void runGame(void)
 		} // end switch
 	} // end while
 }
-void step(char Direction,tPlayer *Player,tRealm *Realm)
+void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walkin
 {
 	int new_x, new_y;
 	new_x = Player->x;
@@ -250,7 +250,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm)
 		}
 		case 'm' :{
 			showGameMessage("You find a magic charm");
-			Player->magic++;						
+			Player->mana++;						
 			Consumed = 1;
 			break;
 		}
@@ -284,11 +284,11 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 		while ( (Player->health > 0) && (BadGuyHealth > 0) )
 		{
 			// Player takes turn first
-			if (Player->magic > ICE_SPELL_COST)
+			if (Player->mana > ICE_SPELL_COST)
 				printString("(I)CE spell");
-			if (Player->magic > FIRE_SPELL_COST)
+			if (Player->mana > FIRE_SPELL_COST)
 				printString("(F)ire spell");
-			if (Player->magic > LIGHTNING_SPELL_COST)
+			if (Player->mana > LIGHTNING_SPELL_COST)
 				printString("(L)ightning spell");
 			if (Player->Weapon1)
 			{
@@ -308,7 +308,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				case 'I':
 				{
 					printString("FREEZE!");
-					Player->magic -= ICE_SPELL_COST;
+					Player->mana -= ICE_SPELL_COST;
 					Damage = FreezeSpellDamage[BadGuyIndex]+range_random(10);
 					BadGuyHealth -= Damage;
 					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
@@ -319,7 +319,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				case 'F':
 				{
 					printString("BURN!");
-					Player->magic -= FIRE_SPELL_COST;
+					Player->mana -= FIRE_SPELL_COST;
 					Damage = FireSpellDamage[BadGuyIndex]+range_random(10);
 					BadGuyHealth -= Damage;
 					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
@@ -330,7 +330,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				case 'L':
 				{
 					printString("ZAP!");
-					Player->magic -= LIGHTNING_SPELL_COST;
+					Player->mana -= LIGHTNING_SPELL_COST;
 					Damage = LightningSpellDamage[BadGuyIndex]+range_random(10);
 					BadGuyHealth -= Damage;
 					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
@@ -376,7 +376,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 			else
 			{
 				eputs("\nMonster's turn!\n");
-				Damage = BadGuyDamage[BadGuyIndex]+range_random(5);
+				Damage = BadGuyDamage[BadGuyIndex]+range_random(4);
 				setHealth(Player,Player->health - Damage);
 				eputs("you took "); printf("%d", Damage); eputs(" damage!\n\n");
 				eputs("Health: you "); printf("%d", Player->health);
@@ -474,7 +474,7 @@ const char *getWeaponName(int index)
 	}
 }
 
-void setHealth(tPlayer *Player,int health)
+void setHealth(tPlayer *Player, int health)
 {
 	if (health > 100)
 		health = 100;
@@ -483,7 +483,7 @@ void setHealth(tPlayer *Player,int health)
 	Player->health = health;
 	
 }	
-void setStrength(tPlayer *Player, byte strength)
+void setStrength(tPlayer *Player, int strength)
 {
 	if (strength > 100)
 		strength = 100;
@@ -491,6 +491,25 @@ void setStrength(tPlayer *Player, byte strength)
 		strength = 0;
 	Player->strength = strength;
 }
+
+void setDefense(tPlayer *Player, int defense)
+{
+	if (defense > 100)
+		defense = 100;
+	if (defense < 0)
+		defense = 0;
+	Player->defense = defense;
+}
+
+void setIntelligence(tPlayer *Player, int intelligence)
+{
+	if (intelligence > 100)
+		intelligence = 100;
+	if (intelligence < 0)
+		intelligence = 0;
+	Player->intelligence = intelligence;
+}
+
 void initPlayer(tPlayer *Player,tRealm *theRealm)
 {
 	// get the player name
@@ -510,8 +529,10 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	}
 	Player->name[index]=0; // terminate the name
 	setHealth(Player,100);
-	Player->strength=50+range_random(50);
-	Player->magic=50+range_random(50);	
+	Player->strength = 50+range_random(50);
+	Player->mana = 50+range_random(50);
+	Player->defense = 50+range_random(50);	
+	Player->intelligence = 50+range_random(50);		
 	Player->wealth=10+range_random(10);
 	Player->Weapon1 = 0;
 	Player->Weapon2 = 0;
@@ -532,7 +553,9 @@ void showPlayer(tPlayer *thePlayer)
 	printf("Name: %s\n", thePlayer->name);
 	printf("Health: %d\n", thePlayer->health);
 	printf("Strength: %d\n", thePlayer->strength);
-   	printf("Magic: %d\n", thePlayer->magic);
+   	printf("Mana: %d\n", thePlayer->mana);
+	printf("Defense: %d\n", thePlayer->defense);
+	printf("Intelligence: %d\n", thePlayer->intelligence);
    	printf("Wealth: %d\n", thePlayer->wealth);
    	printf("Location: %d, %d\n", thePlayer->x, thePlayer->y);
 	printf("Weapon1: %s\n", thePlayer->Weapon1);
@@ -545,7 +568,9 @@ void SavePlayer(tPlayer *thePlayer)
    	fprintf(SaveFile, "Name: %s\n", thePlayer->name);
    	fprintf(SaveFile, "Health: %d\n", thePlayer->health);
    	fprintf(SaveFile, "Strength: %d\n", thePlayer->strength);
-   	fprintf(SaveFile, "Magic: %d\n", thePlayer->magic);
+   	fprintf(SaveFile, "Mana: %d\n", thePlayer->mana);
+	fprintf(SaveFile, "Defense: %s\n", thePlayer->defense);
+	fprintf(SaveFile, "Intelligence: %s\n", thePlayer->intelligence);
    	fprintf(SaveFile, "Wealth: %d\n", thePlayer->wealth);
    	fprintf(SaveFile, "Location: %d, %d\n", thePlayer->x, thePlayer->y);
 	fprintf(SaveFile, "Weapon1: %d\n", thePlayer->Weapon1);
@@ -570,14 +595,14 @@ void LoadRealm(tRealm *theRealm)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "r");
-	for(y=0;y<MAP_HEIGHT;y++)
+	for(y=0;y<x<20+RealmLevel*4;y++)
 	{
-		for(x=0;x<MAP_WIDTH;x++)
+		for(x=0;x<x<20+RealmLevel*4;x++)
 		{
 			//printf("TEST %d", x+y*20);
 			fscanf(SaveFile, "%d", &theRealm->map[y][x]);
 			//eputs("TEST HERE");
-			fseek(SaveFile , 1+ x/(MAP_WIDTH-1) , SEEK_CUR ); //moves through the "space" char or "\n"
+			fseek(SaveFile , 1+ x/(x<20+RealmLevel*4-1) , SEEK_CUR ); //moves through the "space" char or "\n"
 		}
 	}
   	fclose(SaveFile);		
@@ -602,7 +627,15 @@ void LoadPlayer(tPlayer *thePlayer)
 
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
-  	fscanf(SaveFile, "%d", &thePlayer->magic);
+  	fscanf(SaveFile, "%d", &thePlayer->mana);
+	
+	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->defense);
+	
+	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->intelligence);
 
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
