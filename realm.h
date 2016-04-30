@@ -5,6 +5,8 @@
 #define MAX_NAME_LEN 20
 #define MAX_WEAPONS 4
 
+#include<stdio.h>
+#include<windows.h>
 
 typedef unsigned char byte;
 typedef struct {
@@ -17,9 +19,9 @@ typedef struct {
 	int strength;
 	byte stamina;
 	byte mana;
-	byte wealth;
 	int defense;
 	int intelligence;
+	byte wealth;
 	byte x,y;
 	byte Weapon1;
 	byte Weapon2;
@@ -48,3 +50,7 @@ int addWeapon(tPlayer *Player, int Weapon);
 int doChallenge(tPlayer *Player, int BadGuyIndex);
 const char *getWeaponName(int index);
 void zap(void);
+//NEW
+void titleScreen(void);
+void printBorder(int,int,COORD,int);
+

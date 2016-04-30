@@ -21,3 +21,7 @@ Save/Load the game (DONE!)
 Streght -> Stamina
 Experience -> Level up
 Player mobility
+Initial Screen (with: game name, new/load game, exit)
+Game goal ?
+Exit the game
+Restart the game

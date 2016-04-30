@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "realm.h"
 #include <stdio.h>
 #include <time.h>
+#include <windows.h> //Alows the use of SetConsoleTitle
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
 const char FindTypes[]={'h','s','m','g','w'};
 
@@ -83,7 +84,17 @@ void runGame(void)
 {
 	char ch;
 	
-	printString("MicroRealms on the LPC810.");	
+	SetConsoleTitle("Forgotten Realms");
+	
+	//titleScreen();
+	//printString("MicroRealms on the LPC810.");
+
+    	system("cls"); 
+
+	printString("=============================================");	
+	printString("=           FORGOTTEN REALMS V1.2           =");
+	printString("=============================================");	
+
 	showHelp();		
 	while(GameStarted == 0)
 	{
@@ -106,6 +117,7 @@ void runGame(void)
 		LoadRealm(&theRealm);
 		eputs("Game Loaded!\n");
 	}
+	
 	showPlayer(&thePlayer);
 	eputs("\n");
 	showRealm(&theRealm,&thePlayer);
@@ -164,7 +176,7 @@ void runGame(void)
 		} // end switch
 	} // end while
 }
-void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walkin
+void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 {
 	int new_x, new_y;
 	new_x = Player->x;
@@ -536,12 +548,15 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	Player->wealth=10+range_random(10);
 	Player->Weapon1 = 0;
 	Player->Weapon2 = 0;
+	
+
+	
 	// Initialize the player's location
 	// Make sure the player does not land
 	// on an occupied space to begin with
 	do {
-		x=range_random(MAP_WIDTH);
-		y=range_random(MAP_HEIGHT);
+		x=range_random(20+RealmLevel*4);
+		y=range_random(20+RealmLevel*4);
 		
 	} while(theRealm->map[y][x] != '.');
 	Player->x=x;
@@ -549,68 +564,82 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 }
 void showPlayer(tPlayer *thePlayer)
 {
-	
-	printf("Name: %s\n", thePlayer->name);
-	printf("Health: %d\n", thePlayer->health);
-	printf("Strength: %d\n", thePlayer->strength);
-   	printf("Mana: %d\n", thePlayer->mana);
-	printf("Defense: %d\n", thePlayer->defense);
-	printf("Intelligence: %d\n", thePlayer->intelligence);
-   	printf("Wealth: %d\n", thePlayer->wealth);
-   	printf("Location: %d, %d\n", thePlayer->x, thePlayer->y);
-	printf("Weapon1: %s\n", thePlayer->Weapon1);
-	printf("Weapon2: %s\n", thePlayer->Weapon2);
+
+	HANDLE out;
+    out=GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD ptext={56,30},ctext={56,31},utext={56,32},utext1={56,33},utext2={56,34},utext3={56,35},utext4={56,36},utext5={56,37}, utext6={56,38}, userscoresz={55,29};
+	printBorder(20,11,userscoresz,15); //15 is the background color, 20 is the length and 10 is the heigth
+    SetConsoleCursorPosition(out,ptext);
+	printf("Player Board! \n");
+	SetConsoleCursorPosition(out,ctext);
+    printf("Name: %s",thePlayer->name);
+    SetConsoleCursorPosition(out,utext);
+    printf("HP: %d",thePlayer->health);
+    SetConsoleCursorPosition(out,utext1);
+    printf("Str: %d",thePlayer->strength);
+	SetConsoleCursorPosition(out,utext2);
+    printf("Mana: %d",thePlayer->mana);
+    SetConsoleCursorPosition(out,utext3);
+    printf("Int: %d",thePlayer->intelligence);
+    SetConsoleCursorPosition(out,utext4);
+    printf("Wealth: %d",thePlayer->wealth);
+	SetConsoleCursorPosition(out,utext5);
+	printf("Weapon1: %s",thePlayer->Weapon1);
+	SetConsoleCursorPosition(out,utext6);
+	printf("Weapon2: %s",thePlayer->Weapon2);
+			
 }
 
 void SavePlayer(tPlayer *thePlayer)
 {
    	SaveFile = fopen("SavePlayer.txt", "w");
+
    	fprintf(SaveFile, "Name: %s\n", thePlayer->name);
    	fprintf(SaveFile, "Health: %d\n", thePlayer->health);
    	fprintf(SaveFile, "Strength: %d\n", thePlayer->strength);
+   	fprintf(SaveFile, "Stamina: %d\n", thePlayer->stamina);
    	fprintf(SaveFile, "Mana: %d\n", thePlayer->mana);
-	fprintf(SaveFile, "Defense: %s\n", thePlayer->defense);
-	fprintf(SaveFile, "Intelligence: %s\n", thePlayer->intelligence);
+	fprintf(SaveFile, "Defense: %d\n", thePlayer->defense);
+	fprintf(SaveFile, "Intelligence: %d\n", thePlayer->intelligence);
    	fprintf(SaveFile, "Wealth: %d\n", thePlayer->wealth);
    	fprintf(SaveFile, "Location: %d, %d\n", thePlayer->x, thePlayer->y);
 	fprintf(SaveFile, "Weapon1: %d\n", thePlayer->Weapon1);
 	fprintf(SaveFile, "Weapon2: %d\n", thePlayer->Weapon2);
-  	fclose(SaveFile);		
+
+  	fclose(SaveFile);			
 }
 
 void SaveRealm(tRealm *theRealm)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "w");
-	for(y=0;y<MAP_HEIGHT;y++)
+	for(y=0;y<20+RealmLevel*4;y++)
 	{
-		for(x=0;x<MAP_WIDTH;x++)
+		for(x=0;x<20+RealmLevel*4;x++)
 			fprintf(SaveFile, "%d ", theRealm->map[y][x]);
 		fprintf(SaveFile, "\n");
 	}
-  	fclose(SaveFile);		
+  	fclose(SaveFile);			
 }
 
 void LoadRealm(tRealm *theRealm)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "r");
-	for(y=0;y<x<20+RealmLevel*4;y++)
+	for(y=0;y<20+RealmLevel*4;y++)
 	{
-		for(x=0;x<x<20+RealmLevel*4;x++)
+		for(x=0;x<20+RealmLevel*4;x++)
 		{
-			//printf("TEST %d", x+y*20);
 			fscanf(SaveFile, "%d", &theRealm->map[y][x]);
-			//eputs("TEST HERE");
-			fseek(SaveFile , 1+ x/(x<20+RealmLevel*4-1) , SEEK_CUR ); //moves through the "space" char or "\n"
+			fseek(SaveFile , 1+ x/(20+RealmLevel*4-1) , SEEK_CUR ); //moves through the "space" char or "\n"
 		}
 	}
-  	fclose(SaveFile);		
+  	fclose(SaveFile);	
 }
 
 void LoadPlayer(tPlayer *thePlayer)
 {
-	char aux[255];
+	char aux[20];
    	SaveFile = fopen("SavePlayer.txt", "r");
 
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
@@ -627,12 +656,16 @@ void LoadPlayer(tPlayer *thePlayer)
 
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->stamina);
+
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->mana);
-	
+
 	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->defense);
-	
+
 	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->intelligence);
@@ -645,14 +678,15 @@ void LoadPlayer(tPlayer *thePlayer)
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->x);
 
-	fseek (SaveFile , 2 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->y);
 
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->Weapon1);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->Weapon2);
 
@@ -663,6 +697,9 @@ void initRealm(tRealm *Realm)
 {
 	int x,y;
 	int Rnd;
+	
+	
+   	
 	// clear the map to begin with
 	for (y=0;y < 20+RealmLevel*4; y++)
 	{
@@ -671,9 +708,9 @@ void initRealm(tRealm *Realm)
 			Rnd = range_random(100);
 			
 			if (Rnd >= 98) // put in some baddies
-				Realm->map[y][x]=	Baddies[range_random(sizeof(Baddies))];
+				Realm->map[y][x]=	Baddies[range_random(sizeof(Baddies)-1)];
 			else if (Rnd >= 95) // put in some good stuff
-				Realm->map[y][x]=	FindTypes[range_random(sizeof(FindTypes))];
+				Realm->map[y][x]=	FindTypes[range_random(sizeof(FindTypes)-1)];
 			else if (Rnd >= 90) // put in some rocks
 				Realm->map[y][x]='*'; 
 			else // put in empty space
@@ -709,14 +746,11 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 }
 void showHelp()
 {
-
-	printString("\nHelp");
 	printString("N,S,E,W : go North, South, East, West");
 	printString("# : show map");
 	printString(". : save game");
 	printString("(H)elp");
 	printString("(P)layer details\n");
-	
 }
 
 void showGameMessage(char *Msg)
@@ -737,5 +771,56 @@ char getUserInput()
 void zap()
 {
 	// do some special effect when someone uses a spell
+}
+
+void titleScreen()         ///displays the title screen
+{
+	printf("Welcome to the Whispering Burrows!\n");
+
+}
+
+void printBorder(int _length,int _width,COORD _coordinates,int _color)     ///border printing function
+{
+    int i,j;
+    COORD zerozero={0,0},bordersz;
+    SMALL_RECT _rect;
+    CHAR_INFO _border[_length*_width];
+    HANDLE out;
+    out=GetStdHandle(STD_OUTPUT_HANDLE);
+    bordersz.X=_length;
+    bordersz.Y=_width;
+    _rect.Left=_coordinates.X;
+    _rect.Top=_coordinates.Y;
+    _rect.Right=_rect.Left+_length;
+    _rect.Bottom=_rect.Top+_width;
+    for(i=0;i<_width;i++)
+    {
+        for(j=0;j<_length;j++)
+        {
+            if(i==0 || i==_width-1)
+            {
+                _border[j+_length*i].Char.AsciiChar=205;
+                _border[j+_length*i].Attributes=_color;
+                continue;
+            }
+            if(j==0 || j==_length-1)
+            {
+                _border[j+_length*i].Char.AsciiChar=186;
+                _border[j+_length*i].Attributes=_color;
+                continue;
+            }
+            _border[j+_length*i].Char.AsciiChar=' ';
+            _border[j+_length*i].Attributes=_color;
+        }
+    }
+    _border[0].Char.AsciiChar=201;
+    _border[_length-1].Char.AsciiChar=187;
+    _border[_length*_width - 1].Char.AsciiChar=188;
+    _border[_length*(_width-1)].Char.AsciiChar=200;
+    _border[0].Attributes=_color;
+    _border[_length-1].Attributes=_color;
+    _border[_length*_width - 1].Attributes=_color;
+    _border[_length*(_width-1)].Attributes=_color;
+    WriteConsoleOutput(out,_border,bordersz,zerozero,&_rect);
 }
 

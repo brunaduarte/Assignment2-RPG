@@ -1,8 +1,0 @@
-Name: bruna
-Health: 100
-Strength: 78
-Magic: 98
-Wealth: 10
-Location: 15, 6
-Weapon1: 0
-Weapon2: 0
