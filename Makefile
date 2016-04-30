@@ -20,8 +20,8 @@ OBJS= console.o	main.o realm.o
 # These object files are linked together to create main.elf
 main.elf : $(OBJS)
 	gcc $(OBJS) $(LDFLAGS) -o microrealms	
-	@echo "Assuming all went well..."
-	@echo "run the program with ./microrealms"	
+	@echo "JUST DO II!"
+	@echo "Run the program with microrealms"	
 # The object file main.o depends on maiqn.c.  main.c is compiled to make main.o
 main.o: main.c
 	$(CC) -c $(CCFLAGS) main.c -o main.o
