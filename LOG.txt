@@ -5,3 +5,6 @@
 - reworking damage/battle system
 
 - showing values in decimal instead of hexa
+
+- add "-1" in array: Baddies[range_random(sizeof(Baddies)-1)];  ---> initRealm (old array is accessing non-existing position)
+(That was the cause of Windows map lines breakdown)

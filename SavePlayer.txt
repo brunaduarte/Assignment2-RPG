@@ -1,8 +1,15 @@
-Name: adsdasd
-Health: 100
-Strength: 73
-Magic: 97
-Wealth: 14
-Location: 18, 9
+Name: walb
+MaxHealth: 115
+Health: 115
+Strength: 21
+Stamina: 87
+MaxMana: 240
+Mana: 240
+Defense: 12
+Intelligence: 24
+Experience: 9
+Level: 2
+Wealth: 66
+Location: 2, 16
 Weapon1: 0
 Weapon2: 0
