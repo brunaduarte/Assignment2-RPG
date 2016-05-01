@@ -227,17 +227,17 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			break;
 		}
 		case 'T' :{
-			showGameMessage("An evil troll challenges you");
+			showGameMessage("An evil troll is trolling you"); // adding humor 01
 			Consumed = doChallenge(Player,1);
 			break;
 		}
 		case 'D' :{
-			showGameMessage("A smouldering Dragon blocks your way !");
+			showGameMessage("A Red-Dragon blocks your way !"); // adding appropriate description
 			Consumed = doChallenge(Player,2);
 			break;
 		}
 		case 'H' :{
-			showGameMessage("A withered hag cackles at you wickedly");
+			showGameMessage("A withered hag cackles at you wickedly"); 
 			Consumed = doChallenge(Player,3);
 			break;
 		}
@@ -398,7 +398,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 		}
 		if (Player->health == 0)
 		{ // You died
-			printString("You are dead. Press Reset to restart");
+			printString("G A M E - O V E R. Press Reset to restart"); // added GAME-OVER 
 			while(1);
 		}
 		else
