@@ -1,0 +1,33 @@
+using #include windows.h limits the cross compilation
+
+or all:
+// console output, very usefull for debugging with printf
+#include <stdio.h>
+// string handling functions, also usefull
+#include <string.h>
+// std c lib. a must for a good program
+#include <stdlib.h>
+// if you do 3d you will mostly use sin/cos, here it goes
+#include <math.h>
+// for opengl this goes here (glu optional)
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glx.h>
+
+Xlib (the lowest most possibility):
+#include <X11/Xlib.h>
+
+Gtk:
+#include <gtk/gtk.h>
+#include <gdk/gdkx.h>
+
+FOX-toolkit (replace 1.4 with your version or use a macro through automake):
+#include <fox-1.4/fx.h>
+#include <fox-1.4/fx3d.h>
+
+for qt i don't know, never used it, google is your friend.
+
+and if you want to get rid of the entire cross platform problems either use
+
+GLUT:
+#include <GL/glut.h>
