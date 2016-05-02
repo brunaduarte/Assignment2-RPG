@@ -27,18 +27,19 @@ const char FindTypes[]={'h','s','m','g','w'};
 
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
-// Baddie types : O(gre),T(roll),D(ragon),H(ag)
-const char Baddies[]={'O','T','D','H'};
+// Baddie types : W(olf),O(gre),T(roll),D(ragon),H(ag)
+const char Baddies[]={'W','O','T','D','H'};
 // The following is the weapons' damage
-const byte WeaponDamage[]={4,10,12,14};
+const byte WeaponDamage[]={3,10,12,14};
 #define ICE_SPELL_COST 15
 #define FIRE_SPELL_COST 15
 #define LIGHTNING_SPELL_COST 15
-const byte FreezeSpellDamage[]={15,20,15,5};
-const byte FireSpellDamage[]={20,15,15,5};
-const byte LightningSpellDamage[]={15,15,20,5};
-const byte BadGuyDamage[]={18,20,26,15};
-const byte BadGuyExperience[]={40,40,70,30};
+const byte FreezeSpellDamage[]={15,15,20,15,5};
+const byte FireSpellDamage[]={15,20,15,15,5};
+const byte LightningSpellDamage[]={15,15,15,20,5};
+const byte BadGuyDamage[]={12,18,20,26,15};
+const byte BadGuyExperience[]={30,50,55,70,40};
+const byte BadGuyLife[]={75,100,90,110,80};
 int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
@@ -161,13 +162,13 @@ void runGame(void)
 				break;
 			}
 			case '#' : {		
-				if (thePlayer.wealth)		
-				{
+				//if (thePlayer.wealth)		
+				//{
 					showRealm(&theRealm,&thePlayer);
 					//thePlayer.wealth--; //no one likes this
-				}
-				else
-					showGameMessage("No gold!");
+				//}
+				//else
+				//	showGameMessage("No gold!");
 				break;
 			}
 			case 'p' : {				
@@ -221,25 +222,30 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 	switch (AreaContents)
 	{
 		
-		// const char Baddies[]={'O','T','B','H'};
-		case 'O' :{
-			showGameMessage("A smelly green Ogre appears before you");
+		// const char Baddies[]={'W','O','T','B','H'};
+		case 'W' :{
+			showGameMessage("A giant Wolf tries to eat you!");
 			Consumed = doChallenge(Player,0);
 			break;
 		}
-		case 'T' :{
-			showGameMessage("An evil troll challenges you");
+		case 'O' :{
+			showGameMessage("A smelly green Ogre appears before you!");
 			Consumed = doChallenge(Player,1);
 			break;
 		}
-		case 'D' :{
-			showGameMessage("A smouldering Dragon blocks your way !");
+		case 'T' :{
+			showGameMessage("An evil Troll challenges you!");
 			Consumed = doChallenge(Player,2);
 			break;
 		}
-		case 'H' :{
-			showGameMessage("A withered hag cackles at you wickedly");
+		case 'D' :{
+			showGameMessage("A Red Dragon blocks your way!");
 			Consumed = doChallenge(Player,3);
+			break;
+		}
+		case 'H' :{
+			showGameMessage("A withered hag cackles at you wickedly!");
+			Consumed = doChallenge(Player,4);
 			break;
 		}
 		case 'h' :{
@@ -289,7 +295,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 	int aux;
 	char ch;
 	int Damage;
-	int BadGuyHealth = 100;
+	int BadGuyHealth = BadGuyLife[BadGuyIndex];
 	printString("Press F to fight");
 	ch = getUserInput() | 32; // get user input and force lower case
 	if (ch == 'f')
@@ -494,9 +500,9 @@ const char *getWeaponName(int index)
 	switch (index)
 	{
 		case 0:return "Empty"; break;
-		case 1:return "Sword";break;
-		case 2:return "Axe"; break;
-		case 3:return "Flail"; break;
+		case 1:return "Sword (atk10)";break;
+		case 2:return "Axe (atk12)"; break;
+		case 3:return "Flail (atk14)"; break;
 	}
 }
 
@@ -801,8 +807,8 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 		eputs("\r\n");
 	}
 	printString("\r\nLegend");
-	printString("(T)roll, (O)gre, (D)ragon, (H)ag, e(X)it");
-	printString("(w)eapon, (g)old), (m)agic, (s)trength, (h)ealth");
+	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it");
+	printString("(w)eapon, (g)old), (m)agic, (s)trength, (h)ealth, (*)rock");
 	printString("@=You");
 }
 void showHelp()
