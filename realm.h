@@ -1,7 +1,7 @@
 // realm.h
 // Some game constants
-#define MAP_WIDTH 30
-#define MAP_HEIGHT 20
+#define MAP_WIDTH 40
+#define MAP_HEIGHT 40
 #define MAX_NAME_LEN 20
 #define MAX_WEAPONS 4
 
@@ -11,7 +11,7 @@
 typedef unsigned char byte;
 typedef struct {
 	byte map[MAP_HEIGHT][MAP_WIDTH];
-	
+	byte RealmLevel;
 } tRealm;
 typedef struct {
 	char name[MAX_NAME_LEN+1];
@@ -37,10 +37,10 @@ void showHelp();
 void showGameMessage(char *Msg);
 char getUserInput();
 void runGame(void);
-void initRealm(tRealm *Realm);
+void initRealm(tRealm *Realm, byte RealmLevel);
 void showRealm(tRealm *Realm,tPlayer *thePlayer);
-void SaveRealm(tRealm *Realm);
-void LoadRealm(tRealm *Realm);
+void SaveRealm(tRealm *Realm, byte RealmLevel);
+void LoadRealm(tRealm *Realm, byte RealmLevel);
 void initPlayer(tPlayer *Player,tRealm *Realm);
 void showPlayer(tPlayer *thePlayer);
 void SavePlayer(tPlayer *thePlayer);

@@ -109,13 +109,13 @@ void runGame(void)
 	
 	if ( (ch == 'S') || (ch == 's') )
 	{
-		initRealm(&theRealm);	
+		initRealm(&theRealm, RealmLevel);	
 		initPlayer(&thePlayer,&theRealm);
 	}
 	if( (ch == 'L') || (ch == 'l') )
 	{
 		LoadPlayer(&thePlayer);
-		LoadRealm(&theRealm);
+		LoadRealm(&theRealm, RealmLevel);
 		eputs("Game Loaded!\n");
 	}
 	
@@ -131,7 +131,7 @@ void runGame(void)
 		switch (ch) {
 			case '.' : {
 				SavePlayer(&thePlayer);
-				SaveRealm(&theRealm);
+				SaveRealm(&theRealm, RealmLevel);
 				showGameMessage("Game Saved!");
   				break;
 			}
@@ -277,7 +277,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			printString("A door! You exit into a new realm");
 			RealmLevel++;
 			setHealth(Player,Player->Maxhealth); // maximize health
-			initRealm(&theRealm);
+			initRealm(&theRealm, RealmLevel);
 			showRealm(&theRealm,Player);
 		}
 	}
@@ -654,10 +654,11 @@ void SavePlayer(tPlayer *thePlayer)
   	fclose(SaveFile);			
 }
 
-void SaveRealm(tRealm *theRealm)
+void SaveRealm(tRealm *theRealm, byte RealmLevel)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "w");
+	fprintf(SaveFile, "%d\n", theRealm->RealmLevel);
 	for(y=0;y<20+RealmLevel*4;y++)
 	{
 		for(x=0;x<20+RealmLevel*4;x++)
@@ -667,10 +668,11 @@ void SaveRealm(tRealm *theRealm)
   	fclose(SaveFile);			
 }
 
-void LoadRealm(tRealm *theRealm)
+void LoadRealm(tRealm *theRealm, byte RealmLevel)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "r");
+	fscanf(SaveFile, "%d", &theRealm->RealmLevel);
 	for(y=0;y<20+RealmLevel*4;y++)
 	{
 		for(x=0;x<20+RealmLevel*4;x++)
@@ -754,12 +756,10 @@ void LoadPlayer(tPlayer *thePlayer)
 	fclose(SaveFile);
 }
 
-void initRealm(tRealm *Realm)
+void initRealm(tRealm *Realm, byte RealmLevel)
 {
 	int x,y;
 	int Rnd;
-	
-	
    	
 	// clear the map to begin with
 	for (y=0;y < 20+RealmLevel*4; y++)
