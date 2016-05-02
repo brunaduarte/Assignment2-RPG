@@ -268,7 +268,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			break;
 		}
 		case 'w' :{
-			Consumed = addWeapon(Player,range_random(MAX_WEAPONS-1)+1);
+			Consumed = addWeapon(Player,range_random(MAX_WEAPONS-2)+1); //weapon 0 = punch (no weapon), so weapons go from 1 to 3
 			showPlayer(Player);
 			break;			
 		}
@@ -276,7 +276,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			// Player landed on the exit
 			printString("A door! You exit into a new realm");
 			RealmLevel++;
-			setHealth(Player,100); // maximize health
+			setHealth(Player,Player->Maxhealth); // maximize health
 			initRealm(&theRealm);
 			showRealm(&theRealm,Player);
 		}
@@ -439,21 +439,19 @@ int addWeapon(tPlayer *Player, int Weapon)
 	{
 		case 1:
 		{	
-			printString("a mighty axe");
+			printString("a steel sword (atk=10)");
 			break;
 		}
 		case 2:
 		{	
-			printString("a sword with mystical runes");
+			printString("a mighty axe (atk=12)");
 			break;
 		}
 		case 3:
 		{	
-			printString("a bloody flail");
+			printString("a bloody flail (atk=14)");
 			break;
 		}		
-		default:
-			printHex(Weapon);
 	}
 	if ( (Player->Weapon1) && (Player->Weapon2) )
 	{
@@ -496,8 +494,8 @@ const char *getWeaponName(int index)
 	switch (index)
 	{
 		case 0:return "Empty"; break;
-		case 1:return "Axe";break;
-		case 2:return "Sword"; break;
+		case 1:return "Sword";break;
+		case 2:return "Axe"; break;
 		case 3:return "Flail"; break;
 	}
 }
@@ -593,7 +591,7 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 }
 void showPlayer(tPlayer *thePlayer)
 {
-
+/*
 	HANDLE out;
     out=GetStdHandle(STD_OUTPUT_HANDLE);
     COORD ptext={56,30},ctext={56,31},utext={56,32},utext1={56,33},utext2={56,34},utext3={56,35},utext4={56,36},utext5={56,37}, utext6={56,38}, userscoresz={55,29};
@@ -613,10 +611,24 @@ void showPlayer(tPlayer *thePlayer)
     SetConsoleCursorPosition(out,utext4);
     printf("Wealth: %d",thePlayer->wealth);
 	SetConsoleCursorPosition(out,utext5);
-	printf("Weapon1: %s",thePlayer->Weapon1);
+	printf("Weapon1: %s",getWeaponName(thePlayer->Weapon1));
 	SetConsoleCursorPosition(out,utext6);
-	printf("Weapon2: %s",thePlayer->Weapon2);
-			
+	printf("Weapon2: %s",getWeaponName(thePlayer->Weapon2));
+*/
+
+   	printf("Name: %s\n", thePlayer->name);
+   	printf("Health: %d/%d\n", thePlayer->health, thePlayer->Maxhealth);
+   	printf("Strength: %d\n", thePlayer->strength);
+   	printf("Stamina: %d\n", thePlayer->stamina);
+   	printf("Mana: %d/%d\n", thePlayer->mana, thePlayer->Maxmana);
+	printf("Defense: %d\n", thePlayer->defense);
+	printf("Intelligence: %d\n", thePlayer->intelligence);
+	printf("Experience: %d/%d\n", thePlayer->experience, (thePlayer->level)*100);
+	printf("Level: %d\n", thePlayer->level);
+   	printf("Wealth: %d\n", thePlayer->wealth);
+   	printf("Location: %d, %d\n", thePlayer->x, thePlayer->y);
+	printf("Weapon1: %s, ", getWeaponName(thePlayer->Weapon1));
+	printf("Weapon2: %s\n", getWeaponName(thePlayer->Weapon2));
 }
 
 void SavePlayer(tPlayer *thePlayer)

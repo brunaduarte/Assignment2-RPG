@@ -1,15 +1,15 @@
-Name: walb
-MaxHealth: 115
-Health: 115
-Strength: 21
-Stamina: 87
-MaxMana: 240
-Mana: 240
-Defense: 12
-Intelligence: 24
-Experience: 9
-Level: 2
-Wealth: 66
-Location: 2, 16
+Name: walber
+MaxHealth: 100
+Health: 100
+Strength: 11
+Stamina: 100
+MaxMana: 170
+Mana: 170
+Defense: 10
+Intelligence: 17
+Experience: 0
+Level: 1
+Wealth: 14
+Location: 16, 12
 Weapon1: 0
 Weapon2: 0
