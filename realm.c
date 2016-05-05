@@ -44,8 +44,10 @@ int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
 int RealmLevel=0;
+char ch;
 FILE *SaveFile;
 void delay(int len);
+int flag;
 
 unsigned prbs()
 {
@@ -83,20 +85,16 @@ unsigned range_random(unsigned range)
 	return prbs() % (range+1);
 }
 void runGame(void)
-{
-	char ch;
-	
+{	
 	SetConsoleTitle("Forgotten Realms");
-	
-	//titleScreen();
-	//printString("MicroRealms on the LPC810.");
+	HANDLE out=GetStdHandle(STD_OUTPUT_HANDLE);
 
     	system("cls"); 
 
 	printString("=============================================");	
 	printString("=           FORGOTTEN REALMS V1.2           =");
-	printString("=============================================");	
-
+	printString("=============================================\n");	
+    printString("A truly epic RPG-roguelike game\n");
 	showHelp();		
 	while(GameStarted == 0)
 	{
@@ -116,59 +114,65 @@ void runGame(void)
 	if( (ch == 'L') || (ch == 'l') )
 	{
 		LoadPlayer(&thePlayer);
-		LoadRealm(&theRealm, RealmLevel);
+		LoadRealm(&theRealm);
 		eputs("Game Loaded!\n");
 	}
-	
-	showPlayer(&thePlayer);
-	eputs("\n");
+	system("cls");
 	showRealm(&theRealm,&thePlayer);
-	showGameMessage("Press H for help");
-	
+	showPlayer(&thePlayer);
+	COORD position={0,33};
+	SetConsoleCursorPosition(out,position);
+	//eputs("\n");
+
 	while (1)
 	{
-		ch = getUserInput();
+		flag=1; //clean screen
+		//ch = getUserInput();
+		ch = getch();
 		ch = ch | 32; // enforce lower case
+		if(ch=='r'||ch=='R')
+		{
+			eputs("Are you sure? (Y/N)\n");
+			char option=getUserInput();
+			if(option=='Y'||option=='y')
+			{
+				GameStarted=0;
+				return;
+			}
+		}
+		else
 		switch (ch) {
 			case '.' : {
 				SavePlayer(&thePlayer);
-				SaveRealm(&theRealm, RealmLevel);
+				SaveRealm(&theRealm);
 				showGameMessage("Game Saved!");
+				flag=0;
   				break;
 			}
 			case 'h' : {
 				showHelp();
+				flag=0;
 				break;
 			}
-			case 'n' : {
-				showGameMessage("North");
+			case 'w' : {
+				//showGameMessage("North");
 				step('n',&thePlayer,&theRealm);
 				break;
 			}
 			case 's' : {
-				showGameMessage("South");
+				//showGameMessage("South");
 				step('s',&thePlayer,&theRealm);
 				break;
 
 			}
-			case 'e' : {
-				showGameMessage("East");
+			case 'd' : {
+				//showGameMessage("East");
 				step('e',&thePlayer,&theRealm);
 				break;
 			}
-			case 'w' : {
-				showGameMessage("West");
+			case 'a' : {
+				//showGameMessage("West");
 				step('w',&thePlayer,&theRealm);
-				break;
-			}
-			case '#' : {		
-				//if (thePlayer.wealth)		
-				//{
-					showRealm(&theRealm,&thePlayer);
-					//thePlayer.wealth--; //no one likes this
-				//}
-				//else
-				//	showGameMessage("No gold!");
 				break;
 			}
 			case 'p' : {				
@@ -176,6 +180,18 @@ void runGame(void)
 				break;
 			}
 		} // end switch
+		showPlayer(&thePlayer);
+		HANDLE out;
+    	out=GetStdHandle(STD_OUTPUT_HANDLE);
+    	COORD position={0,0}, position2={0,33+4*RealmLevel};
+		SetConsoleCursorPosition(out,position);
+		//system("cls");
+		showRealm(&theRealm,&thePlayer);
+	if (flag)
+	{
+		printf("                                                                                                    "); //clean line
+		SetConsoleCursorPosition(out,position2);
+	}
 	} // end while
 }
 void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
@@ -214,6 +230,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 	if ( AreaContents == '*')
 	{
 		showGameMessage("A rock blocks your path.");
+		flag=0;
 		return;
 	}
 	Player->x = new_x;
@@ -226,56 +243,70 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 		case 'W' :{
 			showGameMessage("A giant Wolf tries to eat you!");
 			Consumed = doChallenge(Player,0);
+			system("pause");
+			system("cls");
 			break;
 		}
 		case 'O' :{
 			showGameMessage("A smelly green Ogre appears before you!");
 			Consumed = doChallenge(Player,1);
+			system("pause");
+			system("cls");
 			break;
 		}
 		case 'T' :{
 			showGameMessage("An evil Troll challenges you!");
 			Consumed = doChallenge(Player,2);
+			system("pause");
+			system("cls");
 			break;
 		}
 		case 'D' :{
 			showGameMessage("A Red Dragon blocks your way!");
 			Consumed = doChallenge(Player,3);
+			system("pause");
+			system("cls");
 			break;
 		}
 		case 'H' :{
 			showGameMessage("A withered hag cackles at you wickedly!");
 			Consumed = doChallenge(Player,4);
+			system("pause");
+			system("cls");
 			break;
 		}
 		case 'h' :{
-			showGameMessage("You find an elixer of health!\nhp+30!");
+			showGameMessage("You find an elixer of health! hp+30!");
 			setHealth(Player,Player->health+30);
 			Consumed = 1;		
+			flag=0;
 			break;
 			
 		}
 		case 's' :{
-			showGameMessage("You find a potion of strength");
+			showGameMessage("You find a potion of strength! str+1!");
 			Consumed = 1;
 			Player->strength++;
+			flag=0;
 			break;
 		}
 		case 'g' :{
-			showGameMessage("You find a shiny golden nugget");
-			Player->wealth++;			
+			showGameMessage("You find a shiny golden nugget!");
+			Player->wealth+=range_random(10);			
 			Consumed = 1;
+			flag=0;
 			break;
 		}
 		case 'm' :{
-			showGameMessage("You find a magic charm");
-			Player->mana++;						
+			showGameMessage("You find a magic charm! mana +20!");
+			Player->mana+=20;						
 			Consumed = 1;
+			flag=0;
 			break;
 		}
 		case 'w' :{
 			Consumed = addWeapon(Player,range_random(MAX_WEAPONS-2)+1); //weapon 0 = punch (no weapon), so weapons go from 1 to 3
-			showPlayer(Player);
+			flag=0;
 			break;			
 		}
 		case 'X' : {
@@ -284,7 +315,8 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			RealmLevel++;
 			setHealth(Player,Player->Maxhealth); // maximize health
 			initRealm(&theRealm, RealmLevel);
-			showRealm(&theRealm,Player);
+			system("pause");
+			system("cls");
 		}
 	}
 	if (Consumed)
@@ -298,6 +330,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 	int BadGuyHealth = BadGuyLife[BadGuyIndex];
 	printString("Press F to fight");
 	ch = getUserInput() | 32; // get user input and force lower case
+	//ch = getch() | 32;
 	if (ch == 'f')
 	{
 		printString("Choose action");
@@ -322,6 +355,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 			}
 			printString("(P)unch");
 			ch = getUserInput();
+			//ch = getch();
 			switch (ch)
 			{
 				case 'i':
@@ -406,7 +440,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 		}
 		if (Player->health == 0)
 		{ // You died
-			printString("You are dead. Press Reset to restart");
+				printString("YOU DIED! Press CTRL+C to leave the game, loser.");
 			while(1);
 		}
 		else
@@ -426,11 +460,11 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 		if(range_random(100)>75) //25% chance of being attacked before leaving battle
 		{
 			aux = range_random(8)+2*Player->level;
-			setHealth(Player, -aux);
+			setHealth(Player, (Player->health)-aux);
 			printf("The monster attacked you, -%d hp\n", aux);
 			if (Player->health == 0)
 			{ // You died
-				printString("You are dead. Press Reset to restart");
+				printString("YOU DIED! Press CTRL+C to leave the game, loser.");
 				while(1);
 			}
 		}
@@ -466,6 +500,7 @@ int addWeapon(tPlayer *Player, int Weapon)
 		printString("You already have two weapons");		
 		printString("(1) drop Weapon1, (2) for Weapon2, (0) skip");
 		c = getUserInput();
+		//c = getch();
 		switch(c)
 		{
 			eputc(c);
@@ -503,6 +538,16 @@ const char *getWeaponName(int index)
 		case 1:return "Sword (atk10)";break;
 		case 2:return "Axe (atk12)"; break;
 		case 3:return "Flail (atk14)"; break;
+	}
+}
+
+const char *getClassName(int index)
+{
+	switch (index)
+	{
+		case 0:return "Mage"; break;
+		case 1:return "Paladin";break;
+		case 2:return "Cavalier"; break;
 	}
 }
 
@@ -552,6 +597,7 @@ void SetExperience(tPlayer *Player, int BadGuyIndex)
 
 void initPlayer(tPlayer *Player,tRealm *theRealm)
 {
+	int ValidOption=0;
 	// get the player name
 	int index=0;
 	byte x,y;
@@ -560,15 +606,40 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	eputs("Enter the player's name: ");
 	while ( (index < MAX_NAME_LEN) && (ch != '\n') && (ch != '\r'))
 	{
-		ch = getchar();//getUserInput();
+		//ch = getch();
+		ch = getchar();
 		if ( ch > '0' ) // strip conrol characters
 		{
 			Player->name[index++]=ch;
-			eputc(ch);
+			//eputc(ch);
+		}
+	}
+	eputs("Enter the player's class:\n");
+	eputs("  (M)age (+Int -Str -Def)\n"); //class 0
+	eputs("  (P)aladin (+Str +Def)\n");  //class 1
+	eputs("  (C)avalier (+Hp +Str -Int)\n"); //class 2
+	while(!ValidOption)
+	{
+		ch = getUserInput();
+		//ch = getch();
+		if((ch=='M')||(ch=='m'))
+		{
+			Player->player_class=0;
+			ValidOption=1;
+		}
+		if((ch=='P')||(ch=='p'))
+		{
+			Player->player_class=1;
+			ValidOption=1;
+		}
+		if((ch=='C')||(ch=='c'))
+		{
+			Player->player_class=2;
+			ValidOption=1;
 		}
 	}
 	Player->name[index]=0; // terminate the name
-	Player->Maxhealth=100;
+	Player->Maxhealth=120;
 	Player->health = Player->Maxhealth;
 	Player->strength = 10+range_random(10);
 	Player->defense = 10;
@@ -597,32 +668,36 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 }
 void showPlayer(tPlayer *thePlayer)
 {
-/*
 	HANDLE out;
     out=GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD ptext={56,30},ctext={56,31},utext={56,32},utext1={56,33},utext2={56,34},utext3={56,35},utext4={56,36},utext5={56,37}, utext6={56,38}, userscoresz={55,29};
-	printBorder(20,11,userscoresz,15); //15 is the background color, 20 is the length and 10 is the heigth
+    COORD ptext={56,11},ctext={56,12},utext={56,13},utext1={56,14},utext2={56,15},utext3={56,16},utext4={56,17},utext5={56,18},utext6={56,19},utext7={56,20},utext8={56,21},utext9={56,22}, userscoresz={55,10};
+	printBorder(24,14,userscoresz,15); //15 is the background color, 20 is the length and 13 is the heigth
     SetConsoleCursorPosition(out,ptext);
 	printf("Player Board! \n");
 	SetConsoleCursorPosition(out,ctext);
     printf("Name: %s",thePlayer->name);
-    SetConsoleCursorPosition(out,utext);
-    printf("HP: %d",thePlayer->health);
-    SetConsoleCursorPosition(out,utext1);
-    printf("Str: %d",thePlayer->strength);
+	SetConsoleCursorPosition(out,utext);
+    printf("Class: %s",getClassName(thePlayer->player_class));
+	SetConsoleCursorPosition(out,utext1);
+    printf("Level: %d",thePlayer->level);
 	SetConsoleCursorPosition(out,utext2);
-    printf("Mana: %d",thePlayer->mana);
+    printf("Exp: %d/%d",thePlayer->experience, (thePlayer->level)*100);
     SetConsoleCursorPosition(out,utext3);
-    printf("Int: %d",thePlayer->intelligence);
+    printf("HP: %d/%d",thePlayer->health, thePlayer->Maxhealth);
     SetConsoleCursorPosition(out,utext4);
-    printf("Wealth: %d",thePlayer->wealth);
+    printf("Mana: %d/%d",thePlayer->mana, thePlayer->Maxmana);
 	SetConsoleCursorPosition(out,utext5);
+    printf("Str: %d",thePlayer->strength);
+    SetConsoleCursorPosition(out,utext6);
+    printf("Int: %d",thePlayer->intelligence);
+    SetConsoleCursorPosition(out,utext7);
+    printf("Wealth: %d",thePlayer->wealth);
+	SetConsoleCursorPosition(out,utext8);
 	printf("Weapon1: %s",getWeaponName(thePlayer->Weapon1));
-	SetConsoleCursorPosition(out,utext6);
+	SetConsoleCursorPosition(out,utext9);
 	printf("Weapon2: %s",getWeaponName(thePlayer->Weapon2));
-*/
 
-   	printf("Name: %s\n", thePlayer->name);
+ /*	printf("Name: %s\n", thePlayer->name);
    	printf("Health: %d/%d\n", thePlayer->health, thePlayer->Maxhealth);
    	printf("Strength: %d\n", thePlayer->strength);
    	printf("Stamina: %d\n", thePlayer->stamina);
@@ -635,6 +710,7 @@ void showPlayer(tPlayer *thePlayer)
    	printf("Location: %d, %d\n", thePlayer->x, thePlayer->y);
 	printf("Weapon1: %s, ", getWeaponName(thePlayer->Weapon1));
 	printf("Weapon2: %s\n", getWeaponName(thePlayer->Weapon2));
+*/
 }
 
 void SavePlayer(tPlayer *thePlayer)
@@ -660,11 +736,11 @@ void SavePlayer(tPlayer *thePlayer)
   	fclose(SaveFile);			
 }
 
-void SaveRealm(tRealm *theRealm, byte RealmLevel)
+void SaveRealm(tRealm *theRealm)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "w");
-	fprintf(SaveFile, "%d\n", theRealm->RealmLevel);
+	fprintf(SaveFile, "%d\n", RealmLevel);
 	for(y=0;y<20+RealmLevel*4;y++)
 	{
 		for(x=0;x<20+RealmLevel*4;x++)
@@ -674,11 +750,12 @@ void SaveRealm(tRealm *theRealm, byte RealmLevel)
   	fclose(SaveFile);			
 }
 
-void LoadRealm(tRealm *theRealm, byte RealmLevel)
+void LoadRealm(tRealm *theRealm)
 {
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "r");
 	fscanf(SaveFile, "%d", &theRealm->RealmLevel);
+	RealmLevel=theRealm->RealmLevel;
 	for(y=0;y<20+RealmLevel*4;y++)
 	{
 		for(x=0;x<20+RealmLevel*4;x++)
@@ -793,6 +870,11 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 void showRealm(tRealm *Realm,tPlayer *thePlayer)
 {
 	int x,y;
+	
+	printString("=============================================");	
+	printString("=           FORGOTTEN REALMS V1.2           =");
+	printString("=============================================\n\n");	
+	
 	printString("The Realm:");	
 	for (y=0;y<20+RealmLevel*4;y++)
 	{
@@ -806,16 +888,17 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 		}
 		eputs("\r\n");
 	}
-	printString("\r\nLegend");
+	printString("\r\n\nLegend");
 	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it");
 	printString("(w)eapon, (g)old), (m)agic, (s)trength, (h)ealth, (*)rock");
+	printString("Press H for help");
 	printString("@=You");
 }
 void showHelp()
 {
-	printString("N,S,E,W : go North, South, East, West");
-	printString("# : show map");
+	printString("W,S,A,D : go North, South, West, East");
 	printString(". : save game");
+	printString("r : restart game");
 	printString("(H)elp");
 	printString("(P)layer details\n");
 }
@@ -823,7 +906,7 @@ void showHelp()
 void showGameMessage(char *Msg)
 {
 	printString(Msg);
-	printString("Ready");
+	//printString("Ready");
 }
 char getUserInput()
 {

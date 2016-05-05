@@ -15,6 +15,7 @@ typedef struct {
 } tRealm;
 typedef struct {
 	char name[MAX_NAME_LEN+1];
+	byte player_class;
 	int Maxhealth;
 	int health;	
 	int strength;
@@ -39,8 +40,8 @@ char getUserInput();
 void runGame(void);
 void initRealm(tRealm *Realm, byte RealmLevel);
 void showRealm(tRealm *Realm,tPlayer *thePlayer);
-void SaveRealm(tRealm *Realm, byte RealmLevel);
-void LoadRealm(tRealm *Realm, byte RealmLevel);
+void SaveRealm(tRealm *Realm);
+void LoadRealm(tRealm *Realm);
 void initPlayer(tPlayer *Player,tRealm *Realm);
 void showPlayer(tPlayer *thePlayer);
 void SavePlayer(tPlayer *thePlayer);
@@ -55,4 +56,5 @@ void zap(void);
 void titleScreen(void);
 void printBorder(int,int,COORD,int);
 void SetExperience(tPlayer *Player, int BadGuyIndex);
+const char *getClassName(int index);
 
