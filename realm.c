@@ -21,25 +21,45 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "realm.h"
 #include <stdio.h>
 #include <time.h>
-#include <windows.h> //Alows the use of SetConsoleTitle
+#include <windows.h> //Allows the use of SetConsoleTitle
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
-const char FindTypes[]={'h','s','m','g','w'};
+const char FindTypes[]={'h','m','g'};
+const char RareTypes[]={'s','w'};
 
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
 // Baddie types : W(olf),O(gre),T(roll),D(ragon),H(ag)
 const char Baddies[]={'W','O','T','D','H'};
 // The following is the weapons' damage
-const byte WeaponDamage[]={3,10,12,14};
+const byte WeaponDamage[]={3,8,11,14}; //stamina cost: 1/1/2/3
 #define ICE_SPELL_COST 15
 #define FIRE_SPELL_COST 15
 #define LIGHTNING_SPELL_COST 15
-const byte FreezeSpellDamage[]={15,15,20,15,5};
-const byte FireSpellDamage[]={15,20,15,15,5};
-const byte LightningSpellDamage[]={15,15,15,20,5};
-const byte BadGuyDamage[]={12,18,20,26,15};
+const byte FreezeSpellDamage[]={12,12,18,12,5};
+const byte FireSpellDamage[]={12,18,12,12,5};
+const byte LightningSpellDamage[]={12,12,12,18,5};
+const byte BadGuyDamage[]={13,18,20,26,15};
 const byte BadGuyExperience[]={30,50,55,70,40};
 const byte BadGuyLife[]={75,100,90,110,80};
+
+//base bonus for each class: mage/paladin/cavalier
+//mage: +4int, -1str, -1def
+//paladin: +2str, +1def
+//cavalier: +15hp, +3str, -1int
+const byte Classhealth[]={0,0,15};
+const byte Classstrength[]={-1,2,3};
+const byte Classint[]={4,0,-1};
+const byte Classdefense[]={-1,1,0};
+
+//levelup bonus for each class: mage/paladin/cavalier
+//mage: +2int
+//paladin: +1str, +1def
+//cavalier: +3hp, +1str
+const byte Bonushealth[]={0,0,3};
+const byte Bonusstrength[]={0,1,1};
+const byte Bonusint[]={2,0,0};
+const byte Bonusdefense[]={0,1,0};
+
 int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
@@ -94,12 +114,13 @@ void runGame(void)
 	printString("=============================================");	
 	printString("=           FORGOTTEN REALMS V1.2           =");
 	printString("=============================================\n");	
-    printString("A truly epic RPG-roguelike game\n");
+    printString("A truly epic RPG-roguelike game");
+	printString("(Please play full-screen!)\n");
 	showHelp();		
 	while(GameStarted == 0)
 	{
 		
-		showGameMessage("Press S to start a new game \nPress L to load a previous game");
+		showGameMessage("\nPress S to start a new game \nPress L to load a previous game");
 		ch = getUserInput();			
 		
 		if ( (ch == 'S') || (ch == 's') || (ch == 'L') || (ch == 'l') )
@@ -117,10 +138,11 @@ void runGame(void)
 		LoadRealm(&theRealm);
 		eputs("Game Loaded!\n");
 	}
+	delay(200);
 	system("cls");
 	showRealm(&theRealm,&thePlayer);
 	showPlayer(&thePlayer);
-	COORD position={0,33};
+	COORD position={0,33+4*RealmLevel};
 	SetConsoleCursorPosition(out,position);
 	//eputs("\n");
 
@@ -175,8 +197,9 @@ void runGame(void)
 				step('w',&thePlayer,&theRealm);
 				break;
 			}
-			case 'p' : {				
-				showPlayer(&thePlayer);
+			case 'e' : {				
+				rest(&thePlayer);
+				flag=0;
 				break;
 			}
 		} // end switch
@@ -299,7 +322,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 		}
 		case 'm' :{
 			showGameMessage("You find a magic charm! mana +20!");
-			Player->mana+=20;						
+			setMana(Player,Player->mana+20);						
 			Consumed = 1;
 			flag=0;
 			break;
@@ -361,66 +384,97 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 				case 'i':
 				case 'I':
 				{
-					printString("FREEZE!");
-					Player->mana -= ICE_SPELL_COST;
-					Damage = FreezeSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					zap();
+					if (Player->mana > ICE_SPELL_COST){
+						printString("FREEZE!");
+						Player->mana -= ICE_SPELL_COST;
+						Damage = FreezeSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						zap();
+					}
+					else
+						eputs("You don't have sufficient mana!");
 					break;
 				}
 				case 'f':
 				case 'F':
 				{
-					printString("BURN!");
-					Player->mana -= FIRE_SPELL_COST;
-					Damage = FireSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					zap();
+					if (Player->mana > FIRE_SPELL_COST){
+						printString("BURN!");
+						Player->mana -= FIRE_SPELL_COST;
+						Damage = FireSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						zap();
+					}
+					else
+						eputs("You don't have sufficient mana!");
 					break;
 				}
 				case 'l':
 				case 'L':
 				{
-					printString("ZAP!");
-					Player->mana -= LIGHTNING_SPELL_COST;
-					Damage = LightningSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					zap();
+					if (Player->mana > LIGHTNING_SPELL_COST){
+						printString("ZAP!");
+						Player->mana -= LIGHTNING_SPELL_COST;
+						Damage = LightningSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						zap();
+					}
+					else
+						eputs("You don't have sufficient mana!");
 					break;
 				}
 				case '1':
 				{
-					Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
-					printString("Take that!");
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					Player->stamina--;
+					if (Player->stamina >= Player->Weapon1){
+						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+						printString("Take that!");
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						Player->stamina-=Player->Weapon1;
+					}
+					else{
+						eputs("You are too tired!");
+						Player->stamina++;
+					}
 					break;
 				}
 				case '2':
 				{
-					Damage = WeaponDamage[Player->Weapon2]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
-					printString("Take that!");
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					Player->stamina--;
+					if (Player->stamina >= Player->Weapon2){
+						Damage = WeaponDamage[Player->Weapon2]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+						printString("Take that!");
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						Player->stamina-=Player->Weapon2;
+					}
+					else{
+						eputs("You are too tired!");
+						Player->stamina++;
+					}
 					break;
 				}
 				case 'p':
 				case 'P':
 				{
-					Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
-					printString("Thump!");
-					BadGuyHealth -= Damage;
-					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
-					Player->stamina--;
+					if (Player->stamina >= 2){
+						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+						printString("Thump!");
+						BadGuyHealth -= Damage;
+						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+						Player->stamina--;
+					}
+					else{
+						eputs("You are too tired!");
+						Player->stamina++;
+					}
 					break;
 				}
 				default: {
 					printString("You fumble. Uh oh");
+					setStamina(Player, Player->stamina+1);
 				}
 			}
 
@@ -449,7 +503,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 			Player->wealth += aux;		
 			eputs("You win! Their gold and experience are yours\n");
 			printf("Gained %d gold pieces!\n", aux);
-			SetExperience(Player, BadGuyIndex);			
+			setExperience(Player, BadGuyIndex);			
 			return 1;
 		}
 		
@@ -560,7 +614,25 @@ void setHealth(tPlayer *Player, int health)
 	Player->health = health;
 }	
 
-void SetExperience(tPlayer *Player, int BadGuyIndex)
+void setMana(tPlayer *Player, int mana)
+{
+	if (mana > Player->Maxmana)
+		mana = Player->Maxmana;
+	if (mana < 0)
+		mana = 0;
+	Player->mana = mana;
+}	
+
+void setStamina(tPlayer *Player, int stamina)
+{
+	if (stamina > Player->Maxstamina)
+		stamina = Player->Maxstamina;
+	if (stamina < 0)
+		stamina = 0;
+	Player->stamina = stamina;
+}	
+
+void setExperience(tPlayer *Player, int BadGuyIndex)
 {
 	int aux;
 	aux = BadGuyExperience[BadGuyIndex]+range_random(6);
@@ -572,26 +644,31 @@ void SetExperience(tPlayer *Player, int BadGuyIndex)
 		Player->experience -= 100*Player->level;
 		Player->level++;
 
-		aux = 15+range_random(5);
+		aux = 17+range_random(5)+Bonushealth[Player->player_class];
 		Player->Maxhealth += aux;
 		printf("+ %d hp!\n", aux);
 		setHealth(Player,Player->Maxhealth);
 
-		aux = 3+range_random(3);
+		aux = 2+range_random(1)+Bonusstrength[Player->player_class];
 		Player->strength += aux;
 		printf("+ %d str!\n", aux);
 
-		aux = 2+range_random(2);
+		aux = 1+range_random(1)+Bonusdefense[Player->player_class];
 		Player->defense += aux;
 		printf("+ %d def!\n", aux);
 	
-		aux = 3+range_random(3);
+		aux = 2+range_random(1)+Bonusint[Player->player_class];
 		Player->intelligence += aux;
-		printf("+ %d int!\n\n", aux);
+		printf("+ %d int!\n", aux);
 		Player->Maxmana = 10*Player->intelligence;
 		Player->mana = Player->Maxmana;
+		
+		aux = 3;
+		Player->Maxstamina += aux;
+		printf("+ %d stamina!\n\n", aux);
+		Player->stamina = Player->Maxstamina;
 
-		eputs("HP and Mana fully restored!\n");
+		eputs("The player is fully restored!\n");
 	}
 }
 
@@ -639,15 +716,16 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 		}
 	}
 	Player->name[index]=0; // terminate the name
-	Player->Maxhealth=120;
+	Player->Maxhealth=120+Classhealth[Player->player_class];
 	Player->health = Player->Maxhealth;
-	Player->strength = 10+range_random(10);
-	Player->defense = 10;
-	Player->stamina = 100;	
-	Player->intelligence = 10+range_random(10);
+	Player->strength = 10+range_random(5)+Classstrength[Player->player_class];
+	Player->defense = 10+Classdefense[Player->player_class];
+	Player->Maxstamina = 20;
+	Player->stamina = Player->Maxstamina;
+	Player->intelligence = 10+range_random(5)+Classint[Player->player_class];
 	Player->Maxmana = 10*Player->intelligence;
 	Player->mana = Player->Maxmana;		
-	Player->wealth=10+range_random(10);
+	Player->wealth=20+range_random(10);
 	Player->level=1;
 	Player->experience=0;
 	Player->Weapon1 = 0;
@@ -670,8 +748,8 @@ void showPlayer(tPlayer *thePlayer)
 {
 	HANDLE out;
     out=GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD ptext={56,11},ctext={56,12},utext={56,13},utext1={56,14},utext2={56,15},utext3={56,16},utext4={56,17},utext5={56,18},utext6={56,19},utext7={56,20},utext8={56,21},utext9={56,22}, userscoresz={55,10};
-	printBorder(24,14,userscoresz,15); //15 is the background color, 20 is the length and 13 is the heigth
+    COORD ptext={56,11},ctext={56,12},utext={56,13},utext1={56,14},utext2={56,15},utext3={56,16},utext4={56,17},utext5={56,18},utext6={56,19},utext7={56,20},utext8={56,21}, userscoresz={55,10};
+	printBorder(24,13,userscoresz,15); //15 is the background color, 20 is the length and 13 is the heigth
     SetConsoleCursorPosition(out,ptext);
 	printf("Player Board! \n");
 	SetConsoleCursorPosition(out,ctext);
@@ -679,22 +757,20 @@ void showPlayer(tPlayer *thePlayer)
 	SetConsoleCursorPosition(out,utext);
     printf("Class: %s",getClassName(thePlayer->player_class));
 	SetConsoleCursorPosition(out,utext1);
-    printf("Level: %d",thePlayer->level);
+    printf("Level: %d   Exp: %d/%d",thePlayer->level, thePlayer->experience, (thePlayer->level)*100);
 	SetConsoleCursorPosition(out,utext2);
-    printf("Exp: %d/%d",thePlayer->experience, (thePlayer->level)*100);
-    SetConsoleCursorPosition(out,utext3);
     printf("HP: %d/%d",thePlayer->health, thePlayer->Maxhealth);
-    SetConsoleCursorPosition(out,utext4);
+    SetConsoleCursorPosition(out,utext3);
     printf("Mana: %d/%d",thePlayer->mana, thePlayer->Maxmana);
-	SetConsoleCursorPosition(out,utext5);
-    printf("Str: %d",thePlayer->strength);
+	SetConsoleCursorPosition(out,utext4);
+	printf("Stamina: %d/%d",thePlayer->stamina, thePlayer->Maxstamina);
+    SetConsoleCursorPosition(out,utext5);
+    printf("Str: %d   Int: %d",thePlayer->strength, thePlayer->intelligence);
     SetConsoleCursorPosition(out,utext6);
-    printf("Int: %d",thePlayer->intelligence);
+    printf("Def: %d   Gold: %d",thePlayer->defense, thePlayer->wealth);
     SetConsoleCursorPosition(out,utext7);
-    printf("Wealth: %d",thePlayer->wealth);
-	SetConsoleCursorPosition(out,utext8);
 	printf("Weapon1: %s",getWeaponName(thePlayer->Weapon1));
-	SetConsoleCursorPosition(out,utext9);
+	SetConsoleCursorPosition(out,utext8);
 	printf("Weapon2: %s",getWeaponName(thePlayer->Weapon2));
 
  /*	printf("Name: %s\n", thePlayer->name);
@@ -718,9 +794,11 @@ void SavePlayer(tPlayer *thePlayer)
    	SaveFile = fopen("SavePlayer.txt", "w");
 
    	fprintf(SaveFile, "Name: %s\n", thePlayer->name);
+	fprintf(SaveFile, "Class: %d\n", thePlayer->player_class);
    	fprintf(SaveFile, "MaxHealth: %d\n", thePlayer->Maxhealth);
    	fprintf(SaveFile, "Health: %d\n", thePlayer->health);
    	fprintf(SaveFile, "Strength: %d\n", thePlayer->strength);
+	fprintf(SaveFile, "MaxStamina: %d\n", thePlayer->Maxstamina);
    	fprintf(SaveFile, "Stamina: %d\n", thePlayer->stamina);
    	fprintf(SaveFile, "MaxMana: %d\n", thePlayer->Maxmana);
    	fprintf(SaveFile, "Mana: %d\n", thePlayer->mana);
@@ -775,11 +853,15 @@ void LoadPlayer(tPlayer *thePlayer)
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
 	fscanf(SaveFile, "%s", thePlayer->name);
-
+	
+	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%d", &thePlayer->player_class);
+	
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->Maxhealth);
-
+	
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->health);
@@ -788,6 +870,10 @@ void LoadPlayer(tPlayer *thePlayer)
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->strength);
 
+   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
+	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+  	fscanf(SaveFile, "%d", &thePlayer->Maxstamina);
+	
    	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
 	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
   	fscanf(SaveFile, "%d", &thePlayer->stamina);
@@ -853,8 +939,10 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 			
 			if (Rnd >= 98) // put in some baddies
 				Realm->map[y][x]=	Baddies[range_random(sizeof(Baddies)-1)];
+			else if (Rnd == 97) // put in some rare stuff
+				Realm->map[y][x]=	RareTypes[range_random(sizeof(RareTypes)-1)];
 			else if (Rnd >= 95) // put in some good stuff
-				Realm->map[y][x]=	FindTypes[range_random(sizeof(FindTypes)-1)];
+				Realm->map[y][x]=	RareTypes[range_random(sizeof(RareTypes)-1)];
 			else if (Rnd >= 90) // put in some rocks
 				Realm->map[y][x]='*'; 
 			else // put in empty space
@@ -898,9 +986,8 @@ void showHelp()
 {
 	printString("W,S,A,D : go North, South, West, East");
 	printString(". : save game");
-	printString("r : restart game");
-	printString("(H)elp");
-	printString("(P)layer details\n");
+	printString("r : restart game (required to leave the game with Ctrl+C)");
+	printString("e : rest");
 }
 
 void showGameMessage(char *Msg)
@@ -923,6 +1010,15 @@ void zap()
 	// do some special effect when someone uses a spell
 }
 
+void rest(tPlayer *Player)
+{
+	eputs("resting... (Please wait and don't press any button!)");
+	delay(7000);
+	eputs("\rYou feel rested!                                               ");
+	setStamina(Player, Player->stamina+5);
+	setHealth(Player, Player->health+3);
+	setMana(Player, Player->mana+3);
+}
 void titleScreen()         ///displays the title screen
 {
 	printf("Welcome to the Whispering Burrows!\n");
@@ -973,3 +1069,13 @@ void printBorder(int _length,int _width,COORD _coordinates,int _color)     ///bo
     WriteConsoleOutput(out,_border,bordersz,zerozero,&_rect);
 }
 
+void delay(int milliseconds)
+{
+    long pause;
+    clock_t now,then;
+
+    pause = milliseconds*(CLOCKS_PER_SEC/1000);
+    now = then = clock();
+    while( (now-then) < pause )
+        now = clock();
+}

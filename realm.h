@@ -19,6 +19,7 @@ typedef struct {
 	int Maxhealth;
 	int health;	
 	int strength;
+	int Maxstamina;
 	int stamina;
 	int Maxmana;
 	int mana;
@@ -55,6 +56,9 @@ void zap(void);
 //NEW
 void titleScreen(void);
 void printBorder(int,int,COORD,int);
-void SetExperience(tPlayer *Player, int BadGuyIndex);
+void setExperience(tPlayer *Player, int BadGuyIndex);
+void setMana(tPlayer *Player, int mana);
+void setStamina(tPlayer *Player, int stamina);
 const char *getClassName(int index);
-
+void rest(tPlayer *Player);
+void delay(int milliseconds);
