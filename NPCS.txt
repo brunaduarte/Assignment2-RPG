@@ -1,0 +1,11 @@
+Yuki
+Quest: Kill 10 Ogres
+Reward: 500 gold pieces
+
+Kirito
+Quest: Kill all the enemies in the current dungeon level
+Reward: Katana (special item)
+
+Lupita
+Quest: Reach Realm Lvl 10 Without Dying
+Reward: Charm (didnt decide what it does yet) 

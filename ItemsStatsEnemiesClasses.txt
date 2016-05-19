@@ -1,0 +1,18 @@
+Items 				Stats
+
+Heal Potion	(235)		Hp
+Stamina Potion  (232)		Str
+Mana Potion 	(145)		Stamina
+*Invincibility 	(236)		Mana
+Gold Piece	(229)		Int
+Armor		(234)		Def
+Weapons 	(159)		
+		
+Enemies				Class
+
+Orc		(		Mage 		(++Mana ++Int -Str -Def)
+Troll		(		Paladin		(+Str +Def) 
+Dragon		(		Cavalier 	(-Mana -Int ++Hp ++Str) 
+Hag		(		
+Imp		(
+Wolf		(
