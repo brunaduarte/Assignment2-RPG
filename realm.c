@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <windows.h> //Allows the use of SetConsoleTitle
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
 const char FindTypes[]={'h','m','g'};
-const char RareTypes[]={'s','w'};
+const char RareTypes[]={'s','w','.','.'}; //50% chance of being nothing! decreases the chance of generation to 0.5%
 
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
@@ -64,6 +64,7 @@ int GameStarted = 0;
 tPlayer thePlayer;
 tRealm theRealm;
 int RealmLevel=0;
+int RealmSizeX=20;
 char ch;
 FILE *SaveFile;
 void delay(int len);
@@ -142,7 +143,7 @@ void runGame(void)
 	system("cls");
 	showRealm(&theRealm,&thePlayer);
 	showPlayer(&thePlayer);
-	COORD position={0,33+4*RealmLevel};
+	COORD position={0,33};
 	SetConsoleCursorPosition(out,position);
 	//eputs("\n");
 
@@ -206,7 +207,7 @@ void runGame(void)
 		showPlayer(&thePlayer);
 		HANDLE out;
     	out=GetStdHandle(STD_OUTPUT_HANDLE);
-    	COORD position={0,0}, position2={0,33+4*RealmLevel};
+    	COORD position={0,0}, position2={0,33};
 		SetConsoleCursorPosition(out,position);
 		//system("cls");
 		showRealm(&theRealm,&thePlayer);
@@ -232,13 +233,13 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 		}
 		case 's' :
 		{
-			if (new_y < 20+RealmLevel*4-1)
+			if (new_y < 20-1)
 				new_y++;
 			break;
 		}
 		case 'e' :
 		{
-			if (new_x <  20+RealmLevel*4-1)
+			if (new_x <  RealmSizeX-1)
 				new_x++;
 			break;
 		}
@@ -299,7 +300,7 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			break;
 		}
 		case 'h' :{
-			showGameMessage("You find an elixer of health! hp+30!");
+			showGameMessage("You find an potion of health! hp+30!");
 			setHealth(Player,Player->health+30);
 			Consumed = 1;		
 			flag=0;
@@ -315,13 +316,13 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 		}
 		case 'g' :{
 			showGameMessage("You find a shiny golden nugget!");
-			Player->wealth+=range_random(10);			
+			Player->wealth+=5+range_random(5);			
 			Consumed = 1;
 			flag=0;
 			break;
 		}
 		case 'm' :{
-			showGameMessage("You find a magic charm! mana +20!");
+			showGameMessage("You find a potion of mana! mana +20!");
 			setMana(Player,Player->mana+20);						
 			Consumed = 1;
 			flag=0;
@@ -336,10 +337,21 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			// Player landed on the exit
 			printString("A door! You exit into a new realm");
 			RealmLevel++;
+			RealmSizeX += 4;
+			if(RealmSizeX>MAP_WIDTH)
+				RealmSizeX=MAP_WIDTH;
 			setHealth(Player,Player->Maxhealth); // maximize health
 			initRealm(&theRealm, RealmLevel);
 			system("pause");
 			system("cls");
+			break;
+		}
+		case '$' :{
+			showGameMessage("You find a merchant! Want to purchase something? (Y/N) ");
+			ch = getUserInput() | 32; // get user input and force lower case
+			if(ch=='y')
+				merchant(Player);
+			break;
 		}
 	}
 	if (Consumed)
@@ -528,7 +540,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 int addWeapon(tPlayer *Player, int Weapon)
 {
 	char c;
-	eputs("You stumble upon ");
+	eputs("You got ");
 	switch (Weapon)
 	{
 		case 1:
@@ -550,7 +562,6 @@ int addWeapon(tPlayer *Player, int Weapon)
 	if ( (Player->Weapon1) && (Player->Weapon2) )
 	{
 		// The player has two weapons already.
-		showPlayer(Player);
 		printString("You already have two weapons");		
 		printString("(1) drop Weapon1, (2) for Weapon2, (0) skip");
 		c = getUserInput();
@@ -737,8 +748,8 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	// Make sure the player does not land
 	// on an occupied space to begin with
 	do {
-		x=range_random(20+RealmLevel*4);
-		y=range_random(20+RealmLevel*4);
+		x=range_random(RealmSizeX);
+		y=range_random(20);
 		
 	} while(theRealm->map[y][x] != '.');
 	Player->x=x;
@@ -819,9 +830,9 @@ void SaveRealm(tRealm *theRealm)
 	int x,y;
    	SaveFile = fopen("SaveRealm.txt", "w");
 	fprintf(SaveFile, "%d\n", RealmLevel);
-	for(y=0;y<20+RealmLevel*4;y++)
+	for(y=0;y<20;y++)
 	{
-		for(x=0;x<20+RealmLevel*4;x++)
+		for(x=0;x<RealmSizeX;x++)
 			fprintf(SaveFile, "%d ", theRealm->map[y][x]);
 		fprintf(SaveFile, "\n");
 	}
@@ -834,12 +845,15 @@ void LoadRealm(tRealm *theRealm)
    	SaveFile = fopen("SaveRealm.txt", "r");
 	fscanf(SaveFile, "%d", &theRealm->RealmLevel);
 	RealmLevel=theRealm->RealmLevel;
-	for(y=0;y<20+RealmLevel*4;y++)
+	RealmSizeX=20+RealmLevel*4;
+	if(RealmSizeX>MAP_WIDTH)
+		RealmSizeX=MAP_WIDTH;
+	for(y=0;y<20;y++)
 	{
-		for(x=0;x<20+RealmLevel*4;x++)
+		for(x=0;x<RealmSizeX;x++)
 		{
 			fscanf(SaveFile, "%d", &theRealm->map[y][x]);
-			fseek(SaveFile , 1+ x/(20+RealmLevel*4-1) , SEEK_CUR ); //moves through the "space" char or "\n"
+			fseek(SaveFile , 1+ x/(RealmSizeX-1) , SEEK_CUR ); //moves through the "space" char or "\n"
 		}
 	}
   	fclose(SaveFile);	
@@ -931,9 +945,9 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 	int Rnd;
    	
 	// clear the map to begin with
-	for (y=0;y < 20+RealmLevel*4; y++)
+	for (y=0;y < 20; y++)
 	{
-		for (x=0; x < 20+RealmLevel*4; x++)
+		for (x=0; x < RealmSizeX; x++)
 		{
 			Rnd = range_random(100);
 			
@@ -942,17 +956,21 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 			else if (Rnd == 97) // put in some rare stuff
 				Realm->map[y][x]=	RareTypes[range_random(sizeof(RareTypes)-1)];
 			else if (Rnd >= 95) // put in some good stuff
-				Realm->map[y][x]=	RareTypes[range_random(sizeof(RareTypes)-1)];
-			else if (Rnd >= 90) // put in some rocks
+				Realm->map[y][x]=	FindTypes[range_random(sizeof(FindTypes)-1)];
+			else if (Rnd >= 89) // put in some rocks
 				Realm->map[y][x]='*'; 
 			else // put in empty space
 				Realm->map[y][x] ='.';
 		}
 	}
+	// shop/store/merchant
+	x = range_random(RealmSizeX-1);
+	y = range_random(20-1);
+	Realm->map[y][x]='$';
 	
 	// finally put the exit to the next level in
-	x = range_random(20+RealmLevel*4);
-	y = range_random(20+RealmLevel*4);
+	x = range_random(RealmSizeX-1);
+	y = range_random(20-1);
 	Realm->map[y][x]='X';
 }
 void showRealm(tRealm *Realm,tPlayer *thePlayer)
@@ -964,9 +982,9 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 	printString("=============================================\n\n");	
 	
 	printString("The Realm:");	
-	for (y=0;y<20+RealmLevel*4;y++)
+	for (y=0;y<20;y++)
 	{
-		for (x=0;x<20+RealmLevel*4;x++)
+		for (x=0;x<RealmSizeX;x++)
 		{
 			
 			if ( (x==thePlayer->x) && (y==thePlayer->y))
@@ -1078,4 +1096,105 @@ void delay(int milliseconds)
     now = then = clock();
     while( (now-then) < pause )
         now = clock();
+}
+
+void merchant(tPlayer *Player)
+{
+	int exit=0;
+	while(!exit)
+	{
+		system("cls");
+		printString("=============================================");	
+		printString("=           TRAVELLING MERCHANT           =");
+		printString("=============================================\n");
+		printf("Hello there!!\n\n");
+		printf("Current gold: %d\n\n", Player->wealth);
+		printf("  potion of (h)ealth (hp+30): $10\n\n");
+		printf("  potion of (m)ana (mp+20): $10\n\n");
+		printf("  potion of (s)trength: $40\n\n");
+		printf("  ramdom (w)eapon: $25\n\n");
+		printf("  (l)eave store\n\n");
+		ch = getUserInput() | 32;
+		switch(ch)
+		{
+			case 'h':
+			{
+				if(Player->wealth>=10)
+				{
+					printf("\nItem purchased!\n\n");
+					setHealth(Player,Player->health+30);
+					Player->wealth -=10;
+					delay(700);
+				}
+				else
+				{
+					printf("\nYou dont have enough gold!");
+					delay(700);
+				}
+				break;
+			}
+			case 'm':
+			{
+				if(Player->wealth>=10)
+				{
+					printf("\nItem purchased!\n\n");
+					setMana(Player,Player->mana+30);
+					Player->wealth -=10;
+					delay(700);
+				}
+				else
+				{
+					printf("\nYou dont have enough gold!");
+					delay(700);
+				}
+				break;
+			}
+			case 's':
+			{
+				if(Player->wealth>=40)
+				{
+					printf("\nItem purchased!\n\n");
+					Player->strength ++;
+					Player->wealth -=40;
+					delay(700);
+				}
+				else
+				{
+					printf("\nYou dont have enough gold!");
+					delay(700);
+				}
+				break;
+			}
+			case 'w':
+			{
+				if(Player->wealth>=25)
+				{
+					printf("\nItem purchased!\n\n");
+					addWeapon(Player,range_random(MAX_WEAPONS-2)+1);
+					Player->wealth -=25;
+					delay(800);
+				}
+				else
+				{
+					printf("\nYou dont have enough gold!");
+					delay(700);
+				}
+				break;
+			}
+			case 'l':
+			{
+				printf("\nBye!!\n\n");
+				delay(800);	
+				exit=1;
+				system("cls");
+				break;
+			}
+			default:
+			{
+				printf("\nInvalid option!");
+				delay(700);	
+				break;
+			}
+		}
+	}
 }

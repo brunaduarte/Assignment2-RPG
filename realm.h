@@ -1,7 +1,7 @@
 // realm.h
 // Some game constants
 #define MAP_WIDTH 40
-#define MAP_HEIGHT 40
+#define MAP_HEIGHT 20
 #define MAX_NAME_LEN 20
 #define MAX_WEAPONS 4
 
@@ -62,3 +62,4 @@ void setStamina(tPlayer *Player, int stamina);
 const char *getClassName(int index);
 void rest(tPlayer *Player);
 void delay(int milliseconds);
+void merchant(tPlayer *Player);
