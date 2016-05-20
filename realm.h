@@ -67,3 +67,5 @@ int scanRealm (tRealm *theRealm);
 int doQuest (tPlayer *Player,tRealm *theRealm,int NPC);
 void showQuests(tPlayer *Player);
 void clean_lines(int num);
+void One_monster(tRealm *Realm);
+int doBossBattle(tPlayer *Player, int BossIndex);
