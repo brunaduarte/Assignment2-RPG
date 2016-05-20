@@ -65,4 +65,4 @@ void delay(int milliseconds);
 void merchant(tPlayer *Player);
 int scanRealm (tRealm *theRealm);
 int doQuest (tPlayer *Playert,tRealm *theRealm,int NPC);
-void showQuests(tPlayer *Player,int quest, int questNumber);
+void showQuests(tPlayer *Player,int quest);
