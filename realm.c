@@ -1,4 +1,4 @@
-
+ 
 /*
 Copyright (C) 2014  Frank Duignan
 
@@ -22,16 +22,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdio.h>
 #include <time.h>
 #include <windows.h> //Allows the use of SetConsoleTitle
+
+#include "rlutil.h"
+
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
 const char FindTypes[]={'h','m','g'};
-const char RareTypes[]={'s','w','.','.'}; //50% chance of being nothing! decreases the chance of generation to 0.5%
+const char RareTypes[]={'s','w','.','.'}; //50% chance of being nothing! decreases chance of generation to 0.5%
+
+//Enemies Counter
+int countWolf = 0;
+int countOgre = 0;
+int countTroll = 0;
+int countDragon = 0;
+int countHag = 0;
 
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
 // Baddie types : W(olf),O(gre),T(roll),D(ragon),H(ag)
 const char Baddies[]={'W','O','T','D','H'};
 // The following is the weapons' damage
-const byte WeaponDamage[]={3,8,11,14}; //stamina cost: 1/1/2/3
+const byte WeaponDamage[]={3,8,11,14,20}; //stamina cost: 1/1/2/3/4
 #define ICE_SPELL_COST 15
 #define FIRE_SPELL_COST 15
 #define LIGHTNING_SPELL_COST 15
@@ -46,19 +56,19 @@ const byte BadGuyLife[]={75,100,90,110,80};
 //mage: +4int, -1str, -1def
 //paladin: +2str, +1def
 //cavalier: +15hp, +3str, -1int
-const byte Classhealth[]={0,0,15};
-const byte Classstrength[]={-1,2,3};
-const byte Classint[]={4,0,-1};
-const byte Classdefense[]={-1,1,0};
+const int Classhealth[]={0,0,15};
+const int Classstrength[]={-1,2,3};
+const int Classint[]={4,0,-1};
+const int Classdefense[]={-1,1,0};
 
 //levelup bonus for each class: mage/paladin/cavalier
 //mage: +2int
 //paladin: +1str, +1def
 //cavalier: +3hp, +1str
-const byte Bonushealth[]={0,0,3};
-const byte Bonusstrength[]={0,1,1};
-const byte Bonusint[]={2,0,0};
-const byte Bonusdefense[]={0,1,0};
+const int Bonushealth[]={0,0,3};
+const int Bonusstrength[]={0,1,1};
+const int Bonusint[]={2,0,0};
+const int Bonusdefense[]={0,1,0};
 
 int GameStarted = 0;
 tPlayer thePlayer;
@@ -69,6 +79,7 @@ char ch;
 FILE *SaveFile;
 void delay(int len);
 int flag;
+int questNumber [] = {0,0,0};
 
 unsigned prbs()
 {
@@ -100,11 +111,11 @@ unsigned prbs()
 	return shift_register & 0x7ffffff; // return 31 LSB's 
 }
 
-
 unsigned range_random(unsigned range)
 {
 	return prbs() % (range+1);
 }
+
 void runGame(void)
 {	
 	SetConsoleTitle("Forgotten Realms");
@@ -112,11 +123,19 @@ void runGame(void)
 
     	system("cls"); 
 
-	printString("=============================================");	
-	printString("=           FORGOTTEN REALMS V1.2           =");
-	printString("=============================================\n");	
+	eputs("=============================================\n="); //printstring does \n automatically, eputs doesn't
+	setColor(RED);	
+	eputs("           FORGOTTEN REALMS V3.0           ");
+	setColor(GREY);
+	printString("=\n=============================================\n");	
+	
+	
     printString("A truly epic RPG-roguelike game");
+	setColor(DARKGREY);
 	printString("(Please play full-screen!)\n");
+	setColor(GREY);
+	
+	
 	showHelp();		
 	while(GameStarted == 0)
 	{
@@ -172,11 +191,20 @@ void runGame(void)
 				flag=0;
   				break;
 			}
+			
 			case 'h' : {
 				showHelp();
 				flag=0;
 				break;
 			}
+			
+			//Current quests
+			case 'q' : {
+				showQuests(&thePlayer);
+				flag=0;
+				break;
+			}
+			
 			case 'w' : {
 				//showGameMessage("North");
 				step('n',&thePlayer,&theRealm);
@@ -211,13 +239,16 @@ void runGame(void)
 		SetConsoleCursorPosition(out,position);
 		//system("cls");
 		showRealm(&theRealm,&thePlayer);
-	if (flag)
-	{
-		printf("                                                                                                    "); //clean line
-		SetConsoleCursorPosition(out,position2);
-	}
+		printString(""); //newline
+		
+		if (flag)
+		{
+			clean_lines(3);
+			SetConsoleCursorPosition(out,position2);
+		}
 	} // end while
 }
+
 void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 {
 	int new_x, new_y;
@@ -299,6 +330,30 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 			system("cls");
 			break;
 		}
+		
+		//NPCS
+		case 'Y':{
+			showGameMessage("Hello, I am Yuki! Want to talk? (Y/N)");
+			ch = getUserInput() | 32; // get user input and force lower case
+			if(ch=='y')
+				doQuest(Player,Realm,1);
+			break;
+		}
+		case 'K':{
+			showGameMessage("Kirito here! Want to talk? (Y/N)");
+			ch = getUserInput() | 32; // get user input and force lower case
+			if(ch=='y')
+				doQuest(Player,Realm,2);
+			break;
+		}
+		case 'L':{
+			showGameMessage("Help Lu-chan! Want to talk? (Y/N)");
+			ch = getUserInput() | 32; // get user input and force lower case
+			if(ch=='y')
+				doQuest(Player,Realm,3);
+			break;
+		}
+		
 		case 'h' :{
 			showGameMessage("You find an potion of health! hp+30!");
 			setHealth(Player,Player->health+30);
@@ -357,12 +412,196 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 	if (Consumed)
 		Realm->map[new_y][new_x] = '.'; // remove any item that was found
 }
+
+int scanRealm (tRealm *theRealm) 
+{
+	
+	int x,y,aux;
+	
+	countWolf = 0;
+	countOgre = 0;
+	countTroll = 0;
+	countDragon = 0;
+	countHag = 0;
+	
+	for(y=0;y<20;y++)
+	{
+		for(x=0;x<RealmSizeX;x++)
+		{
+			aux = theRealm->map[y][x];
+			
+			switch (aux)
+			{			
+				case 'W' :
+				{
+					countWolf++;
+					break;					
+				}
+				
+				case 'O':
+				{
+					countOgre++;
+					break;
+				}
+				
+				case 'T':
+				{
+					countTroll++;
+					break;
+				}
+				
+				case 'D':
+				{
+					countDragon++;
+					break;
+				}
+				
+				case 'H':
+				{
+					countHag++;
+					break;
+				}
+			}
+		}
+	}
+}
+
+int doQuest (tPlayer *Player,tRealm *theRealm,int NPC) 
+{
+	
+	int x,y;
+	int Consumed = 0;
+	
+	int new_x, new_y;
+	new_x = Player->x;
+	new_y = Player->y;
+	
+	scanRealm(theRealm);
+	
+	switch (NPC) {
+			
+		//Yuki
+		case 1:
+		{
+			if (countDragon == 0)
+			{					
+				printf("You are my saviour! Thank you very much!\n\n");
+				printf("Gained 80 gold pieces!\n\n");
+				Player->wealth += 80;
+				Consumed = 1;
+				questNumber[0] = 0;
+				system("pause");
+				system("cls");
+			}	
+			else
+			{			
+				printf("I am terrified of Dragons!\n");
+				printf("Would help me and kill them? I can pay you back! (Y/N)\n");
+				
+				char yuki = getUserInput() | 32;
+			
+				if (yuki == 'y')
+				{				
+					printf("I will wait until you come back!\n\n");
+					questNumber[0] = 1;
+					system("pause");
+					system("cls");
+				}
+			}
+			break;
+		}
+		
+		//Kirito
+		case 2:
+		{
+			if (countWolf == 0 && countOgre == 0 && countTroll == 0 && countDragon == 0 && countHag == 0)
+			{								
+				printf("You actually killed all the Monsters! Congratulations!\n");
+				printf("Here is your reward!\n\n");
+				printf("Gained a Legendary Katana!\n\n");
+				addWeapon(Player, 4);
+				Consumed = 1;
+				questNumber[1] = 0;
+				system("pause");
+				system("cls");
+			}		
+			else
+			{	
+				printf("I am bored, want to make a bet?\n");
+				printf("I bet you can't kill all the Monsters in this level! If you win I will give you my weapon! (Y/N)\n");
+					
+				char kirito = getUserInput() | 32;
+			
+				if (kirito == 'y')
+				{			
+					printf("I will be waiting! Haha!\n\n");
+					questNumber[1] = 1;
+					system("pause");
+					system("cls");
+				}
+			}
+			break;
+		}
+		
+		//Lupita
+		case 3:
+		{
+			if (countTroll == 0 && countOgre == 0)
+			{
+				printf("You are the best! Thanks a million!\n");
+				printf("Here is your gift!\n\n");
+				printf("Received 120 Gold!\n\n");
+				Player->wealth += 120;
+				Consumed = 1;
+				questNumber[2] = 0;
+				system("pause");
+				system("cls");
+			}		
+			else
+			{
+				printf("A group of Ogres and Trolls are following me. I am super sacared!\n");
+				printf("Could you kill them, please!? (Y/N)\n");
+						
+				char lupita = getUserInput() | 32;
+			
+				if (lupita == 'y')
+				{	
+					printf("May the gods bless your journey!\n\n");
+					questNumber[2] = 1;
+					system("pause");
+					system("cls");
+				}
+			}
+			break;
+		}
+	}
+	
+	if (Consumed)
+		theRealm->map[new_y][new_x] = '.'; // remove any item that was found
+
+}
+
+void showQuests(tPlayer *Player)
+{ 
+	if (questNumber[0] == 0 && questNumber[1] == 0 && questNumber[2] == 0)
+		printf ("You don't have any active quests!\n");
+	else
+	{
+		if(questNumber[0] == 1)
+			printf ("Lend a hand to Yuki and kill the Dragons!\n");
+		if(questNumber[1] == 1)
+			printf ("Win Kirito's bet and kill all the monsters in this level!\n");
+		if(questNumber[2] == 1)
+			printf ("Save Lupita from the Ogres and Trolls!\n");
+	}	
+}
+
 int doChallenge(tPlayer *Player,int BadGuyIndex)
 {
 	int aux;
 	char ch;
 	int Damage;
-	int BadGuyHealth = BadGuyLife[BadGuyIndex];
+	int BadGuyHealth = BadGuyLife[BadGuyIndex]+10*RealmLevel;
 	printString("Press F to fight");
 	ch = getUserInput() | 32; // get user input and force lower case
 	//ch = getch() | 32;
@@ -399,7 +638,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > ICE_SPELL_COST){
 						printString("FREEZE!");
 						Player->mana -= ICE_SPELL_COST;
-						Damage = FreezeSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = FreezeSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -414,7 +655,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > FIRE_SPELL_COST){
 						printString("BURN!");
 						Player->mana -= FIRE_SPELL_COST;
-						Damage = FireSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = FireSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -429,7 +672,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > LIGHTNING_SPELL_COST){
 						printString("ZAP!");
 						Player->mana -= LIGHTNING_SPELL_COST;
-						Damage = LightningSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = LightningSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -443,6 +688,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= Player->Weapon1){
 						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Take that!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina-=Player->Weapon1;
@@ -458,6 +705,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= Player->Weapon2){
 						Damage = WeaponDamage[Player->Weapon2]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Take that!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina-=Player->Weapon2;
@@ -474,6 +723,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= 2){
 						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Thump!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina--;
@@ -496,7 +747,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 			else
 			{
 				eputs("\nMonster's turn!\n");
-				Damage = BadGuyDamage[BadGuyIndex]+range_random(5)-Player->defense;
+				Damage = BadGuyDamage[BadGuyIndex]+range_random(5)-Player->defense+RealmLevel*3;
+				if(Damage<2) Damage=2;  //min damage
+				if(Damage>50) Damage=50;  //max damage
 				setHealth(Player,Player->health - Damage);
 				eputs("you took "); printf("%d", Damage); eputs(" damage!\n\n");
 				eputs("Health: you "); printf("%d", Player->health);
@@ -523,11 +776,13 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 	else
 	{
 		showGameMessage("Our 'hero' chickens out");
-		if(range_random(100)>75) //25% chance of being attacked before leaving battle
+		if(range_random(100)>75) //25% chance of losing life before leaving battle
 		{
-			aux = range_random(8)+2*Player->level;
-			setHealth(Player, (Player->health)-aux);
-			printf("The monster attacked you, -%d hp\n", aux);
+			Damage = range_random(8)+(2*Player->level)+RealmLevel;
+			if(Damage<2) Damage=2;  //min damage
+			if(Damage>50) Damage=50;  //max damage
+			setHealth(Player, (Player->health)-Damage);
+			printf("You stumble on a rock while fleeing, -%d hp\n", aux);
 			if (Player->health == 0)
 			{ // You died
 				printString("YOU DIED! Press CTRL+C to leave the game, loser.");
@@ -537,6 +792,7 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 		return 0;
 	}
 }
+
 int addWeapon(tPlayer *Player, int Weapon)
 {
 	char c;
@@ -558,6 +814,11 @@ int addWeapon(tPlayer *Player, int Weapon)
 			printString("a bloody flail (atk=14)");
 			break;
 		}		
+		case 4:
+		{	
+			printString("a legendary katana (atk=20)");
+			break;
+		}
 	}
 	if ( (Player->Weapon1) && (Player->Weapon2) )
 	{
@@ -595,6 +856,7 @@ int addWeapon(tPlayer *Player, int Weapon)
 	}	
 	return 1;
 }
+
 const char *getWeaponName(int index)
 {
 	switch (index)
@@ -603,6 +865,7 @@ const char *getWeaponName(int index)
 		case 1:return "Sword (atk10)";break;
 		case 2:return "Axe (atk12)"; break;
 		case 3:return "Flail (atk14)"; break;
+		case 4:return "Katana (atk20)"; break;
 	}
 }
 
@@ -748,27 +1011,29 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	// Make sure the player does not land
 	// on an occupied space to begin with
 	do {
-		x=range_random(RealmSizeX);
-		y=range_random(20);
-		
+		x=range_random(RealmSizeX-1);
+		y=range_random(20-1);		
 	} while(theRealm->map[y][x] != '.');
 	Player->x=x;
 	Player->y=y;
 }
+
 void showPlayer(tPlayer *thePlayer)
 {
 	HANDLE out;
     out=GetStdHandle(STD_OUTPUT_HANDLE);
     COORD ptext={56,11},ctext={56,12},utext={56,13},utext1={56,14},utext2={56,15},utext3={56,16},utext4={56,17},utext5={56,18},utext6={56,19},utext7={56,20},utext8={56,21}, userscoresz={55,10};
-	printBorder(24,13,userscoresz,15); //15 is the background color, 20 is the length and 13 is the heigth
+	printBorder(25,13,userscoresz,15); //15 is the background color, 25 is the length and 13 is the heigth
     SetConsoleCursorPosition(out,ptext);
-	printf("Player Board! \n");
+	setColor(RED);
+	printf("     Player Board     \n");
+	setColor(GREY);
 	SetConsoleCursorPosition(out,ctext);
     printf("Name: %s",thePlayer->name);
 	SetConsoleCursorPosition(out,utext);
     printf("Class: %s",getClassName(thePlayer->player_class));
 	SetConsoleCursorPosition(out,utext1);
-    printf("Level: %d   Exp: %d/%d",thePlayer->level, thePlayer->experience, (thePlayer->level)*100);
+    printf("Level: %d  XP: %d/%d",thePlayer->level, thePlayer->experience, (thePlayer->level)*100);
 	SetConsoleCursorPosition(out,utext2);
     printf("HP: %d/%d",thePlayer->health, thePlayer->Maxhealth);
     SetConsoleCursorPosition(out,utext3);
@@ -963,43 +1228,117 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 				Realm->map[y][x] ='.';
 		}
 	}
+	
+	//NPC Yuki
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
+	Realm->map[y][x]='Y';
+	
+	
+	//NPC Kirito
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
+	Realm->map[y][x]='K';
+	
+	//NPC Lupita
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
+	Realm->map[y][x]='L';
+	
+	
 	// shop/store/merchant
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='$';
 	
+	
 	// finally put the exit to the next level in
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='X';
 }
+
 void showRealm(tRealm *Realm,tPlayer *thePlayer)
 {
 	int x,y;
+	int new_x, new_y;
+	x = thePlayer->x;
+	y = thePlayer->y;
+	byte AreaContents = Realm->map[y][x];
 	
-	printString("=============================================");	
-	printString("=           FORGOTTEN REALMS V1.2           =");
-	printString("=============================================\n\n");	
+	eputs("=============================================\n=");
+	setColor(RED);	
+	eputs("           FORGOTTEN REALMS V3.0           ");
+	setColor(GREY);
+	printString("=\n=============================================\n");
 	
-	printString("The Realm:");	
+	printString("The Realm ");	
 	for (y=0;y<20;y++)
 	{
 		for (x=0;x<RealmSizeX;x++)
 		{
 			
-			if ( (x==thePlayer->x) && (y==thePlayer->y))
+			if ( (x==thePlayer->x) && (y==thePlayer->y)) {
+				setColor(LIGHTRED);
 				eputc('@');
-			else
-				eputc(Realm->map[y][x]);
+			}
+			else{
+				switch(Realm->map[y][x])
+				{
+					case 'L':
+					case 'K':
+					case 'Y':
+					{
+						setColor(LIGHTMAGENTA);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case '$':
+					{
+						setColor(YELLOW);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case 'X':
+					{
+						setColor(WHITE);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					default:
+					{
+						setColor(GREY);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+				}
+			}
 		}
+		setColor(GREY);
 		eputs("\r\n");
 	}
+	setColor(RED); 
 	printString("\r\n\nLegend");
-	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it");
-	printString("(w)eapon, (g)old), (m)agic, (s)trength, (h)ealth, (*)rock");
-	printString("Press H for help");
-	printString("@=You");
+	setColor(GREY);
+	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it, ($)merchant");
+	printString("(w)eapon, (g)old nugget, (m)agic, (s)trength potion, (h)ealth");
+	printString("(*)rock, @=You, (Y)uki (K)irito (L)upita = NPCs");
+	setColor(DARKGREY);
+	printString("Press H for help or Q to show your active quests");
+	setColor(GREY);
+	
 }
+
 void showHelp()
 {
 	printString("W,S,A,D : go North, South, West, East");
@@ -1013,6 +1352,7 @@ void showGameMessage(char *Msg)
 	printString(Msg);
 	//printString("Ready");
 }
+
 char getUserInput()
 {
 	char ch = 0;	
@@ -1037,14 +1377,15 @@ void rest(tPlayer *Player)
 	setHealth(Player, Player->health+3);
 	setMana(Player, Player->mana+3);
 }
-void titleScreen()         ///displays the title screen
+
+void titleScreen()         //displays the title screen
 {
 	printf("Welcome to the Whispering Burrows!\n");
 }
 
-void printBorder(int _length,int _width,COORD _coordinates,int _color)     ///border printing function
-{
-    int i,j;
+void printBorder(int _length,int _width,COORD _coordinates,int _color)     //border printing function
+{	
+	int i,j;
     COORD zerozero={0,0},bordersz;
     SMALL_RECT _rect;
     CHAR_INFO _border[_length*_width];
@@ -1084,6 +1425,7 @@ void printBorder(int _length,int _width,COORD _coordinates,int _color)     ///bo
     _border[_length-1].Attributes=_color;
     _border[_length*_width - 1].Attributes=_color;
     _border[_length*(_width-1)].Attributes=_color;
+	
     WriteConsoleOutput(out,_border,bordersz,zerozero,&_rect);
 }
 
@@ -1105,7 +1447,7 @@ void merchant(tPlayer *Player)
 	{
 		system("cls");
 		printString("=============================================");	
-		printString("=           TRAVELLING MERCHANT           =");
+		printString("=           TRAVELLING MERCHANT             =");
 		printString("=============================================\n");
 		printf("Hello there!!\n\n");
 		printf("Current gold: %d\n\n", Player->wealth);
@@ -1197,4 +1539,11 @@ void merchant(tPlayer *Player)
 			}
 		}
 	}
+}
+
+void clean_lines(int num)
+{
+	int i=0;
+	for(i;i<num;i++)
+		printString("                                                                                                 ");
 }

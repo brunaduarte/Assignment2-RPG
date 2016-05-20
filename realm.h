@@ -3,7 +3,7 @@
 #define MAP_WIDTH 40
 #define MAP_HEIGHT 20
 #define MAX_NAME_LEN 20
-#define MAX_WEAPONS 4
+#define MAX_WEAPONS 5
 
 #include<stdio.h>
 #include<windows.h>
@@ -63,3 +63,7 @@ const char *getClassName(int index);
 void rest(tPlayer *Player);
 void delay(int milliseconds);
 void merchant(tPlayer *Player);
+int scanRealm (tRealm *theRealm);
+int doQuest (tPlayer *Player,tRealm *theRealm,int NPC);
+void showQuests(tPlayer *Player);
+void clean_lines(int num);
