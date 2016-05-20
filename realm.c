@@ -254,7 +254,7 @@ void runGame(void)
 		
 		if (flag)
 		{
-			clean_lines(3);
+			clean_lines(4);
 			SetConsoleCursorPosition(out,position2);
 		}
 	} // end while
@@ -1143,7 +1143,8 @@ void LoadRealm(tRealm *theRealm)
 		for(x=0;x<RealmSizeX;x++)
 		{
 			fscanf(SaveFile, "%d", &theRealm->map[y][x]);
-			fseek(SaveFile , 1+ x/(RealmSizeX-1) , SEEK_CUR ); //moves through the "space" char or "\n"
+			//moves through the "space" char or "\n"
+			fseek(SaveFile , 1+ x/(RealmSizeX-1) , SEEK_CUR );
 		}
 	}
   	fclose(SaveFile);	
@@ -1153,77 +1154,78 @@ void LoadPlayer(tPlayer *thePlayer)
 {
 	char aux[20];
    	SaveFile = fopen("SavePlayer.txt", "r");
-
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+    //moving the file position to the wanted location
+   	fscanf(SaveFile, "%s", aux); 
+	//moves through the "space" char
+	fseek (SaveFile , 1 , SEEK_CUR ); 
 	fscanf(SaveFile, "%s", thePlayer->name);
 	
-	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR ); 
 	fscanf(SaveFile, "%d", &thePlayer->player_class);
 	
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->Maxhealth);
 	
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux);
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->health);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux);
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->strength);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->Maxstamina);
 	
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->stamina);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->Maxmana);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux);
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->mana);
 
-	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->defense);
 
-	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->intelligence);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux);
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->experience);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->level);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->wealth);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux);
+	fseek (SaveFile , 1 , SEEK_CUR ); 
   	fscanf(SaveFile, "%d", &thePlayer->x);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->y);
 
-   	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+   	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->Weapon1);
 
-	fscanf(SaveFile, "%s", aux); //moving the file position to the wanted location
-	fseek (SaveFile , 1 , SEEK_CUR ); //moves through the "space" char
+	fscanf(SaveFile, "%s", aux); 
+	fseek (SaveFile , 1 , SEEK_CUR );
   	fscanf(SaveFile, "%d", &thePlayer->Weapon2);
 
 	fclose(SaveFile);
