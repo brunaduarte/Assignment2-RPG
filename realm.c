@@ -1,4 +1,4 @@
-
+ 
 /*
 Copyright (C) 2014  Frank Duignan
 
@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Find types: h(ealth),s(trength),m(agic),g(old),w(eapon)
 const char FindTypes[]={'h','m','g'};
-const char RareTypes[]={'s','w','.','.'}; //50% chance of being nothing! decreases the chance of generation to 0.5%
+const char RareTypes[]={'s','w','.','.'}; //50% chance of being nothing! decreases chance of generation to 0.5%
 
 //Enemies Counter
 int countWolf = 0;
@@ -38,19 +38,30 @@ int countHag = 0;
 
 // The following arrays define the bad guys and 
 // their battle properies - ordering matters!
+
 // Baddie types : W(olf),O(gre),T(roll),D(ragon),H(ag)
 const char Baddies[]={'W','O','T','D','H'};
+
+// Bosses types : Fire elemental, Apocalypse
+const char Bosses[]={'F','A'};
+const int BossesFreezeSpellDamage[]={20,10};
+const int BossesFireSpellDamage[]={-20,10};
+const int BossesLightningSpellDamage[]={10,10};
+const int BossesDamage[]={30,50};
+const int BossesExperience[]={250, 700};
+const int BossesLife[]={300,600};
+
 // The following is the weapons' damage
-const byte WeaponDamage[]={3,8,11,14,20}; //stamina cost: 1/1/2/3
+const byte WeaponDamage[]={3,8,11,14,20}; //stamina cost: 1/1/2/3/4
 #define ICE_SPELL_COST 15
 #define FIRE_SPELL_COST 15
 #define LIGHTNING_SPELL_COST 15
-const byte FreezeSpellDamage[]={12,12,18,12,5};
-const byte FireSpellDamage[]={12,18,12,12,5};
-const byte LightningSpellDamage[]={12,12,12,18,5};
-const byte BadGuyDamage[]={13,18,20,26,15};
-const byte BadGuyExperience[]={30,50,55,70,40};
-const byte BadGuyLife[]={75,100,90,110,80};
+const int FreezeSpellDamage[]={12,12,18,12,5};
+const int FireSpellDamage[]={12,18,12,12,5};
+const int LightningSpellDamage[]={12,12,12,18,5};
+const int BadGuyDamage[]={13,18,20,25,15};
+const int BadGuyExperience[]={30,50,55,70,40};
+const int BadGuyLife[]={75,100,90,110,80};
 
 //base bonus for each class: mage/paladin/cavalier
 //mage: +4int, -1str, -1def
@@ -79,7 +90,6 @@ char ch;
 FILE *SaveFile;
 void delay(int len);
 int flag;
-int quest = 0; //If there are active quests or not
 int questNumber [] = {0,0,0};
 
 unsigned prbs()
@@ -124,11 +134,11 @@ void runGame(void)
 
     	system("cls"); 
 
-	printString("=============================================");
+	eputs("=============================================\n="); //printstring does \n automatically, eputs doesn't
 	setColor(RED);	
-	printString("=           FORGOTTEN REALMS V3.0           =");
+	eputs("           FORGOTTEN REALMS V3.0           ");
 	setColor(GREY);
-	printString("=============================================\n");	
+	printString("=\n=============================================\n");	
 	
 	
     printString("A truly epic RPG-roguelike game");
@@ -142,18 +152,18 @@ void runGame(void)
 	{
 		
 		showGameMessage("\nPress S to start a new game \nPress L to load a previous game");
-		ch = getUserInput();			
+		ch = getUserInput() | 32;			
 		
-		if ( (ch == 'S') || (ch == 's') || (ch == 'L') || (ch == 'l') )
+		if ( (ch == 's') || (ch == 'l') )
 			GameStarted = 1;
 	}
 	
-	if ( (ch == 'S') || (ch == 's') )
+	if ((ch == 's') )
 	{
 		initRealm(&theRealm, RealmLevel);	
 		initPlayer(&thePlayer,&theRealm);
 	}
-	if( (ch == 'L') || (ch == 'l') )
+	if((ch == 'l') )
 	{
 		LoadPlayer(&thePlayer);
 		LoadRealm(&theRealm);
@@ -173,11 +183,11 @@ void runGame(void)
 		//ch = getUserInput();
 		ch = getch();
 		ch = ch | 32; // enforce lower case
-		if(ch=='r'||ch=='R')
+		if(ch=='r')
 		{
 			eputs("Are you sure? (Y/N)\n");
-			char option=getUserInput();
-			if(option=='Y'||option=='y')
+			char option=getUserInput() | 32;
+			if(option=='y')
 			{
 				GameStarted=0;
 				return;
@@ -201,10 +211,8 @@ void runGame(void)
 			
 			//Current quests
 			case 'q' : {
-				showQuests(&thePlayer, quest);
+				showQuests(&thePlayer);
 				flag=0;
-				system("pause");
-				system("cls");
 				break;
 			}
 			
@@ -242,12 +250,13 @@ void runGame(void)
 		SetConsoleCursorPosition(out,position);
 		//system("cls");
 		showRealm(&theRealm,&thePlayer);
+		printString(""); //newline
 		
-	if (flag)
-	{
-		printf("                                                                                                    "); //clean line
-		SetConsoleCursorPosition(out,position2);
-	}
+		if (flag)
+		{
+			clean_lines(3);
+			SetConsoleCursorPosition(out,position2);
+		}
 	} // end while
 }
 
@@ -307,6 +316,20 @@ void step(char Direction,tPlayer *Player,tRealm *Realm) //Player walking
 		case 'O' :{
 			showGameMessage("A smelly green Ogre appears before you!");
 			Consumed = doChallenge(Player,1);
+			system("pause");
+			system("cls");
+			break;
+		}
+		case 'F' :{
+			showGameMessage("(BOSS) A Fire Elemental wants to melts you!");
+			Consumed = doBossBattle(Player,0);
+			system("pause");
+			system("cls");
+			break;
+		}
+		case 'A' :{
+			showGameMessage("(FINAL BOSS) Apocalypse has come to bring TOTAL OBLIVION!!!");
+			Consumed = doBossBattle(Player,1);
 			system("pause");
 			system("cls");
 			break;
@@ -426,42 +449,44 @@ int scanRealm (tRealm *theRealm)
 	countDragon = 0;
 	countHag = 0;
 	
-	for(y=0;y<20+RealmLevel*4;y++)
+	for(y=0;y<20;y++)
 	{
-		for(x=0;x<20+RealmLevel*4;x++)
+		for(x=0;x<RealmSizeX;x++)
 		{
 			aux = theRealm->map[y][x];
 			
-			switch (aux) {
-			
-				case 'W' :{
+			switch (aux)
+			{			
+				case 'W' :
+				{
 					countWolf++;
-					break;
-					
+					break;					
 				}
 				
-				case 'O':{
+				case 'O':
+				{
 					countOgre++;
 					break;
 				}
 				
-				case 'T':{
+				case 'T':
+				{
 					countTroll++;
 					break;
 				}
 				
-				case 'D':{
+				case 'D':
+				{
 					countDragon++;
 					break;
 				}
 				
-				case 'H':{
+				case 'H':
+				{
 					countHag++;
 					break;
 				}
 			}
-			
-			//printf ("%d\n", countWolf);
 		}
 	}
 }
@@ -477,124 +502,103 @@ int doQuest (tPlayer *Player,tRealm *theRealm,int NPC)
 	new_y = Player->y;
 	
 	scanRealm(theRealm);
-	//printf ("%d", countWolf);
-		
+	
 	switch (NPC) {
 			
 		//Yuki
-		case 1: {
-			//scanRealm(&theRealm);
-			if (countDragon == 0) {
-							
+		case 1:
+		{
+			if (countDragon == 0)
+			{					
 				printf("You are my saviour! Thank you very much!\n\n");
-				printf("Gained 100 gold pieces!\n\n");
-				Player->wealth = 100;
+				printf("Gained 80 gold pieces!\n\n");
+				Player->wealth += 80;
 				Consumed = 1;
-				quest = 0;
 				questNumber[0] = 0;
 				system("pause");
 				system("cls");
-				break;
-			}
-			
-			else {
-			
+			}	
+			else
+			{			
 				printf("I am terrified of Dragons!\n");
 				printf("Would help me and kill them? I can pay you back! (Y/N)\n");
 				
 				char yuki = getUserInput() | 32;
 			
-				if (yuki == 'y'){
-					
+				if (yuki == 'y')
+				{				
 					printf("I will wait until you come back!\n\n");
-					quest = 1;
 					questNumber[0] = 1;
 					system("pause");
 					system("cls");
-					break;
 				}
-				else
-					break;
 			}
-			
+			break;
 		}
 		
 		//Kirito
-		case 2: {
-			//scanRealm(&theRealm);
-			if (countWolf == 0 && countOgre == 0 && countTroll == 0 && countDragon == 0 && countHag == 0) {
-								
+		case 2:
+		{
+			if (countWolf == 0 && countOgre == 0 && countTroll == 0 && countDragon == 0 && countHag == 0)
+			{								
 				printf("You actually killed all the Monsters! Congratulations!\n");
 				printf("Here is your reward!\n\n");
 				printf("Gained a Legendary Katana!\n\n");
 				addWeapon(Player, 4);
 				Consumed = 1;
-				quest = 0;
 				questNumber[1] = 0;
 				system("pause");
 				system("cls");
-				break;
-			}
-			
-			else {
-			
-			printf("I am bored, want to make a bet?\n");
-			printf("I bet you can't kill all the Monsters in this level! If you win I will give you my weapon! (Y/N)\n");
+			}		
+			else
+			{	
+				printf("I am bored, want to make a bet?\n");
+				printf("I bet you can't kill all the Monsters in this level! If you win I will give you my weapon! (Y/N)\n");
 					
-			char kirito = getUserInput() | 32;
+				char kirito = getUserInput() | 32;
 			
-				if (kirito == 'y'){
-					
+				if (kirito == 'y')
+				{			
 					printf("I will be waiting! Haha!\n\n");
-					quest = 1;
 					questNumber[1] = 1;
 					system("pause");
 					system("cls");
-					break;
 				}
-				else
-					break;
 			}
+			break;
 		}
 		
 		//Lupita
-		case 3: {
-			//scanRealm(&theRealm);
-			if (countTroll == 0 && countOgre == 0) {
-				
+		case 3:
+		{
+			if (countTroll == 0 && countOgre == 0)
+			{
 				printf("You are the best! Thanks a million!\n");
 				printf("Here is your gift!\n\n");
-				printf("Received 200 Gold!\n\n");
-				Player->wealth = 200;
+				printf("Received 120 Gold!\n\n");
+				Player->wealth += 120;
 				Consumed = 1;
-				quest = 0;
 				questNumber[2] = 0;
 				system("pause");
 				system("cls");
-				break;
-			}
-			
-			else {
-			
-			printf("A group of Ogres and Trolls are following me. I am super sacared!\n");
-			printf("Could you kill them, please!? (Y/N)\n");
+			}		
+			else
+			{
+				printf("A group of Ogres and Trolls are following me. I am super sacared!\n");
+				printf("Could you kill them, please!? (Y/N)\n");
 						
-			char lupita = getUserInput() | 32;
+				char lupita = getUserInput() | 32;
 			
-				if (lupita == 'y'){
-					
+				if (lupita == 'y')
+				{	
 					printf("May the gods bless your journey!\n\n");
-					quest = 1;
 					questNumber[2] = 1;
 					system("pause");
 					system("cls");
-					break;
 				}
-				else
-					break;
 			}
+			break;
 		}
-		
 	}
 	
 	if (Consumed)
@@ -602,35 +606,27 @@ int doQuest (tPlayer *Player,tRealm *theRealm,int NPC)
 
 }
 
-void showQuests(tPlayer *Player, int quest)
+void showQuests(tPlayer *Player)
 { 
-	if (quest == 0 && questNumber[0] == 0 && questNumber[1] == 0 && questNumber[2] == 0){
+	if (questNumber[0] == 0 && questNumber[1] == 0 && questNumber[2] == 0)
 		printf ("You don't have any active quests!\n");
-	}
-	
-	else {
-			if(questNumber[0] == 1){
-				printf ("Lend a hand to Yuki and kill the Dragons!\n");
-				
-			}
-			if(questNumber[1] == 1){
-				printf ("Win Kirito's bet and kill all the monsters in this level!\n");
-				
-			}
-			if(questNumber[2] == 1){
-				printf ("Save Lupita from the Ogres and Trolls!\n");
-				
-			}
-		}
-		
-	}
+	else
+	{
+		if(questNumber[0] == 1)
+			printf ("Lend a hand to Yuki and kill the Dragons!\n");
+		if(questNumber[1] == 1)
+			printf ("Win Kirito's bet and kill all the monsters in this level!\n");
+		if(questNumber[2] == 1)
+			printf ("Save Lupita from the Ogres and Trolls!\n");
+	}	
+}
 
 int doChallenge(tPlayer *Player,int BadGuyIndex)
 {
 	int aux;
 	char ch;
 	int Damage;
-	int BadGuyHealth = BadGuyLife[BadGuyIndex];
+	int BadGuyHealth = BadGuyLife[BadGuyIndex]+10*RealmLevel;
 	printString("Press F to fight");
 	ch = getUserInput() | 32; // get user input and force lower case
 	//ch = getch() | 32;
@@ -667,7 +663,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > ICE_SPELL_COST){
 						printString("FREEZE!");
 						Player->mana -= ICE_SPELL_COST;
-						Damage = FreezeSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = FreezeSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -682,7 +680,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > FIRE_SPELL_COST){
 						printString("BURN!");
 						Player->mana -= FIRE_SPELL_COST;
-						Damage = FireSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = FireSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -697,7 +697,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->mana > LIGHTNING_SPELL_COST){
 						printString("ZAP!");
 						Player->mana -= LIGHTNING_SPELL_COST;
-						Damage = LightningSpellDamage[BadGuyIndex]+Player->intelligence+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						Damage = LightningSpellDamage[BadGuyIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						zap();
@@ -711,6 +713,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= Player->Weapon1){
 						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Take that!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina-=Player->Weapon1;
@@ -726,6 +730,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= Player->Weapon2){
 						Damage = WeaponDamage[Player->Weapon2]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Take that!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina-=Player->Weapon2;
@@ -742,6 +748,8 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 					if (Player->stamina >= 2){
 						Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
 						printString("Thump!");
+						if(Damage<2) Damage=2;  //min damage
+						if(Damage>50) Damage=50;  //max damage
 						BadGuyHealth -= Damage;
 						eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
 						Player->stamina--;
@@ -764,7 +772,9 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 			else
 			{
 				eputs("\nMonster's turn!\n");
-				Damage = BadGuyDamage[BadGuyIndex]+range_random(5)-Player->defense;
+				Damage = BadGuyDamage[BadGuyIndex]+range_random(5)-Player->defense+RealmLevel*3;
+				if(Damage<2) Damage=2;  //min damage
+				if(Damage>50) Damage=50;  //max damage
 				setHealth(Player,Player->health - Damage);
 				eputs("you took "); printf("%d", Damage); eputs(" damage!\n\n");
 				eputs("Health: you "); printf("%d", Player->health);
@@ -791,11 +801,13 @@ int doChallenge(tPlayer *Player,int BadGuyIndex)
 	else
 	{
 		showGameMessage("Our 'hero' chickens out");
-		if(range_random(100)>75) //25% chance of being attacked before leaving battle
+		if(range_random(100)>75) //25% chance of losing life before leaving battle
 		{
-			aux = range_random(8)+2*Player->level;
-			setHealth(Player, (Player->health)-aux);
-			printf("The monster attacked you, -%d hp\n", aux);
+			Damage = range_random(8)+(2*Player->level)+RealmLevel;
+			if(Damage<2) Damage=2;  //min damage
+			if(Damage>50) Damage=50;  //max damage
+			setHealth(Player, (Player->health)-Damage);
+			printf("You stumble on a rock while fleeing, -%d hp\n", aux);
 			if (Player->health == 0)
 			{ // You died
 				printString("YOU DIED! Press CTRL+C to leave the game, loser.");
@@ -1024,9 +1036,8 @@ void initPlayer(tPlayer *Player,tRealm *theRealm)
 	// Make sure the player does not land
 	// on an occupied space to begin with
 	do {
-		x=range_random(RealmSizeX);
-		y=range_random(20);
-		
+		x=range_random(RealmSizeX-1);
+		y=range_random(20-1);		
 	} while(theRealm->map[y][x] != '.');
 	Player->x=x;
 	Player->y=y;
@@ -1037,7 +1048,7 @@ void showPlayer(tPlayer *thePlayer)
 	HANDLE out;
     out=GetStdHandle(STD_OUTPUT_HANDLE);
     COORD ptext={56,11},ctext={56,12},utext={56,13},utext1={56,14},utext2={56,15},utext3={56,16},utext4={56,17},utext5={56,18},utext6={56,19},utext7={56,20},utext8={56,21}, userscoresz={55,10};
-	printBorder(24,13,userscoresz,15); //15 is the background color, 20 is the length and 13 is the heigth
+	printBorder(25,13,userscoresz,15); //15 is the background color, 25 is the length and 13 is the heigth
     SetConsoleCursorPosition(out,ptext);
 	setColor(RED);
 	printf("     Player Board     \n");
@@ -1243,32 +1254,63 @@ void initRealm(tRealm *Realm, byte RealmLevel)
 		}
 	}
 	
+	One_monster(Realm); //generates at least one of the quest monsters
+	
 	//NPC Yuki
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='Y';
 	
+	//First Boss -> Fire elemental
+	if(RealmLevel==4)
+	{
+		do{
+			x = range_random(RealmSizeX-1);
+			y = range_random(20-1);
+		}while(Realm->map[y][x]!='.');
+		Realm->map[y][x]='F';
+	}
+	
+	//Final Boss -> Apocalypse
+	if(RealmLevel==9)
+	{
+		do{
+			x = range_random(RealmSizeX-1);
+			y = range_random(20-1);
+		}while(Realm->map[y][x]!='.');
+		Realm->map[y][x]='A';
+	}
 	
 	//NPC Kirito
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	    x = range_random(RealmSizeX-1);
+	    y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='K';
 	
 	//NPC Lupita
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='L';
 	
 	
 	// shop/store/merchant
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='$';
 	
 	
 	// finally put the exit to the next level in
-	x = range_random(RealmSizeX-1);
-	y = range_random(20-1);
+	do{
+	   x = range_random(RealmSizeX-1);
+	   y = range_random(20-1);
+	}while(Realm->map[y][x]!='.');
 	Realm->map[y][x]='X';
 }
 
@@ -1280,11 +1322,11 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 	y = thePlayer->y;
 	byte AreaContents = Realm->map[y][x];
 	
-	printString("=============================================");
+	eputs("=============================================\n=");
 	setColor(RED);	
-	printString("=           FORGOTTEN REALMS V3.0           =");
+	eputs("           FORGOTTEN REALMS V3.0           ");
 	setColor(GREY);
-	printString("=============================================\n");	
+	printString("=\n=============================================\n");
 	
 	printString("The Realm ");	
 	for (y=0;y<20;y++)
@@ -1295,25 +1337,60 @@ void showRealm(tRealm *Realm,tPlayer *thePlayer)
 			if ( (x==thePlayer->x) && (y==thePlayer->y)) {
 				setColor(LIGHTRED);
 				eputc('@');
-				setColor(GREY);
 			}
 			else{
-				/*
-				if (AreaContents == 'D')
+				switch(Realm->map[y][x])
+				{
+					case 'L':
+					case 'K':
+					case 'Y':
 					{
-						setColor(LIGHTGREEN);
-					}*/
-				eputc(Realm->map[y][x]);
+						setColor(CYAN);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case '$':
+					{
+						setColor(BROWN);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case '*':
+					{
+						setColor(DARKGREY);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case 'X':
+					{
+						setColor(WHITE);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					case 'F':
+					case 'A':
+					{
+						setColor(RED);
+						eputc(Realm->map[y][x]);
+						break;
+					}
+					default:
+					{
+						setColor(GREY);
+						eputc(Realm->map[y][x]);
+						break;
+					}
 				}
+			}
 		}
-		
+		setColor(GREY);
 		eputs("\r\n");
 	}
 	setColor(RED); 
 	printString("\r\n\nLegend");
 	setColor(GREY);
-	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it");
-	printString("(w)eapon, (g)old), (m)agic, (s)trength, (h)ealth");
+	printString("(W)olf, (T)roll, (O)gre, (D)ragon, (H)ag, e(X)it, ($)merchant");
+	printString("(w)eapon, (g)old nugget, (m)agic, (s)trength potion, (h)ealth");
 	printString("(*)rock, @=You, (Y)uki (K)irito (L)upita = NPCs");
 	setColor(DARKGREY);
 	printString("Press H for help or Q to show your active quests");
@@ -1428,16 +1505,20 @@ void merchant(tPlayer *Player)
 	while(!exit)
 	{
 		system("cls");
-		printString("=============================================");	
+		eputs("=============================================\n=");	
+		setColor(BROWN);
 		printString("=           TRAVELLING MERCHANT             =");
-		printString("=============================================\n");
+		setColor(GREY);
+		printString("=\n=============================================\n");
 		printf("Hello there!!\n\n");
 		printf("Current gold: %d\n\n", Player->wealth);
 		printf("  potion of (h)ealth (hp+30): $10\n\n");
 		printf("  potion of (m)ana (mp+20): $10\n\n");
 		printf("  potion of (s)trength: $40\n\n");
 		printf("  ramdom (w)eapon: $25\n\n");
+		setColor(DARKGREY);
 		printf("  (l)eave store\n\n");
+		setColor(GREY);
 		ch = getUserInput() | 32;
 		switch(ch)
 		{
@@ -1521,4 +1602,216 @@ void merchant(tPlayer *Player)
 			}
 		}
 	}
+}
+
+void clean_lines(int num)
+{
+	int i=0;
+	for(i;i<num;i++)
+		printString("                                                                                                 ");
+}
+
+void One_monster(tRealm *Realm)
+{
+	int x,y;
+	scanRealm(Realm);
+	if(countDragon==0)
+	{
+		do{
+			x = range_random(RealmSizeX-1);
+			y = range_random(20-1);
+		}while(Realm->map[y][x]!='.');
+		Realm->map[y][x]='D';
+		countDragon++;
+	}
+	if(countTroll==0)
+	{
+		do{
+			x = range_random(RealmSizeX-1);
+			y = range_random(20-1);
+		}while(Realm->map[y][x]!='.');
+		Realm->map[y][x]='T';
+		countTroll++;
+	}
+	if(countOgre==0)
+	{
+		do{
+			x = range_random(RealmSizeX-1);
+			y = range_random(20-1);
+		}while(Realm->map[y][x]!='.');
+		Realm->map[y][x]='O';
+		countOgre++;
+	}
+}
+
+int doBossBattle(tPlayer *Player,int BossIndex)
+{
+	int aux;
+	char ch;
+	int Damage;
+	int BossHealth = BossesLife[BossIndex];
+	printString("BOSS BATTLE!! (You cannot escape!)");
+	printString("Choose action");
+	while ( (Player->health > 0) && (BossHealth > 0) )
+	{
+		// Player takes turn first
+		if (Player->mana > ICE_SPELL_COST)
+			printString("(I)CE spell");
+		if (Player->mana > FIRE_SPELL_COST)
+			printString("(F)ire spell");
+		if (Player->mana > LIGHTNING_SPELL_COST)
+			printString("(L)ightning spell");
+		if (Player->Weapon1)
+		{
+			eputs("(1)Use ");
+			printString(getWeaponName(Player->Weapon1));
+		}	
+		if (Player->Weapon2)
+		{
+			eputs("(2)Use ");
+			printString(getWeaponName(Player->Weapon2));
+		}
+		printString("(P)unch");
+		ch = getUserInput() | 32;
+		//ch = getch();
+		switch (ch)
+		{
+			case 'i':
+			{
+				if (Player->mana > ICE_SPELL_COST){
+					printString("FREEZE!");
+					Player->mana -= ICE_SPELL_COST;
+					Damage = BossesFreezeSpellDamage[BossIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					zap();
+				}
+				else
+					eputs("You don't have sufficient mana!");
+				break;
+			}
+			case 'f':
+			{
+				if (Player->mana > FIRE_SPELL_COST){
+					printString("BURN!");
+					Player->mana -= FIRE_SPELL_COST;
+					Damage = BossesFireSpellDamage[BossIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					zap();
+				}
+				else
+					eputs("You don't have sufficient mana!");
+				break;
+			}
+			case 'l':
+			case 'L':
+			{
+				if (Player->mana > LIGHTNING_SPELL_COST){
+					printString("ZAP!");
+					Player->mana -= LIGHTNING_SPELL_COST;
+					Damage = BossesLightningSpellDamage[BossIndex]+(Player->intelligence)/2+range_random((Player->intelligence)/2); //int 12: dmg +6to12
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					zap();
+				}
+				else
+					eputs("You don't have sufficient mana!");
+				break;
+			}
+			case '1':
+			{
+				if (Player->stamina >= Player->Weapon1){
+					Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+					printString("Take that!");
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					Player->stamina-=Player->Weapon1;
+				}
+				else{
+					eputs("You are too tired!");
+					Player->stamina++;
+				}
+				break;
+			}
+			case '2':
+			{
+				if (Player->stamina >= Player->Weapon2){
+					Damage = WeaponDamage[Player->Weapon2]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+					printString("Take that!");
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					Player->stamina-=Player->Weapon2;
+				}
+				else{
+					eputs("You are too tired!");
+					Player->stamina++;
+				}
+				break;
+			}
+			case 'p':
+			case 'P':
+			{
+				if (Player->stamina >= 2){
+					Damage = WeaponDamage[Player->Weapon1]+Player->strength/2+range_random((Player->strength)/2);  //str 12: dmg +6to12
+					printString("Thump!");
+					if(Damage<2) Damage=2;  //min damage
+					if(Damage>50) Damage=50;  //max damage
+					BossHealth -= Damage;
+					eputs("you dealed "); printf("%d", Damage); eputs(" damage!\n");
+					Player->stamina--;
+				}
+				else{
+					eputs("You are too tired!");
+					Player->stamina++;
+				}
+				break;
+			}
+			default: {
+				printString("You fumble. Uh oh");
+				setStamina(Player, Player->stamina+1);
+			}
+		}
+
+		// Bad guy then gets a go 			
+		if (BossHealth <= 0)
+			BossHealth = 0;
+		else
+		{
+			eputs("\nBoss's turn!\n");
+			Damage = BossesDamage[BossIndex]+range_random(10)-Player->defense;
+			if(Damage<2) Damage=2;  //min damage
+			if(Damage>50) Damage=50;  //max damage
+			setHealth(Player,Player->health - Damage);
+			eputs("you took "); printf("%d", Damage); eputs(" damage!\n\n");
+			eputs("Health: you "); printf("%d", Player->health);
+			eputs(", Boss " );printf("%d", BossHealth);
+			eputs("\r\n");
+		}
+	}	
+	if (Player->health == 0)
+	{ // You died
+		printString("YOU DIED! Press CTRL+C to leave the game, loser.");
+		while(1);
+	}
+	else
+	{ // You won!
+		aux = 40 + range_random(10);
+		Player->wealth += aux;		
+		eputs("You killed a BOSS! Congratulations!\n");
+		printf("Gained %d gold pieces!\n", aux);
+		setExperience(Player, BossIndex);			
+		return 1;
+	}
+		
 }
